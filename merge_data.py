@@ -10,15 +10,17 @@ cgm = pd.concat([cgm1, cgm2])
 
 for df in [basal, bolus, cgm, alarms]:
     df["Tijdstempel"] = pd.to_datetime(df["Tijdstempel"], dayfirst=True, errors="coerce")
-    df.dropna(subset=["Tijdstempel"], inplace=True)
     df.set_index("Tijdstempel", inplace=True)
     df.sort_index(inplace=True)
 
 # Define resampling function
 def resample_mixed(df):
-    numeric = df.select_dtypes(include="number").resample("5min").mean()
-    categorical = df.select_dtypes(exclude="number").resample("5min").first()
-    return pd.concat([numeric, categorical], axis=1)
+    numeric = df.select_dtypes(include="number")
+    categorical = df.select_dtypes(exclude="number")
+    numeric_resampled = numeric.resample("5min").mean() if not numeric.empty else pd.DataFrame(index=df.resample("5min").mean().index)
+    categorical_resampled = categorical.resample("5min").first() if not categorical.empty else pd.DataFrame(index=df.resample("5min").mean().index)
+
+    return pd.concat([numeric_resampled, categorical_resampled], axis=1)
 
 basal_resampled = resample_mixed(basal)
 bolus_resampled = resample_mixed(bolus)
