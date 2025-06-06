@@ -18,9 +18,7 @@ from pathlib import Path
 import argparse
 
 # Set up file names and locations.
-DATA_PATH = Path('./intermediate_datafiles/')
-DATASET_FNAME = 'chapter2_result.csv'
-RESULT_FNAME = 'chapter3_result_outliers.csv'
+RESULT_FNAME = 'result_outliers.csv'
 
 def print_flags():
     """
@@ -31,21 +29,15 @@ def print_flags():
 
 
 def main():
-
     print_flags()
-    # Next, import the data from the specified location and parse the date index.
-    try:
-        dataset = pd.read_csv(Path(DATA_PATH / DATASET_FNAME), index_col=0)
-        dataset.index = pd.to_datetime(dataset.index)
 
-    except IOError as e:
-        print('File not found, try to run the preceding crowdsignals scripts first!')
-        raise e
+    # Load your own dataset directly
+    dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Tijdstempel"])
+    dataset.set_index("Tijdstempel", inplace=True)
 
     # We'll create an instance of our visualization class to plot the results.
     DataViz = VisualizeDataset(__file__)
-
-
+    
 
     # Step 1: Let us see whether we have some outliers we would prefer to remove.
 
