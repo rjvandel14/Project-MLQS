@@ -35,6 +35,18 @@ def main():
     dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Tijdstempel"])
     dataset.set_index("Tijdstempel", inplace=True)
 
+    kolommen_met_komma = [
+    'Hoeveelheid', "Invoer bloedglucose (mmol/l)", "Eerste toediening (eenh.)",
+    "Uitgebreide toediening (eenh.)", "Serienummer_bolus", "Invoer koolhydraatverbruik (g)",
+    "Koolhydraatratio", "Toegediende insuline (eenh.)_bolus", "Serienummer_alarms"
+    ]
+
+    for col in kolommen_met_komma:
+        try:
+            dataset[col] = dataset[col].astype(str).str.replace(',', '.', regex=False).str.replace(' ', '').astype(float)
+        except Exception as e:
+            print(f"Fout bij conversie van kolom {col}: {e}")
+
     # We'll create an instance of our visualization class to plot the results.
     DataViz = VisualizeDataset(__file__)
     
@@ -42,7 +54,7 @@ def main():
     # Step 1: Let us see whether we have some outliers we would prefer to remove.
 
     # Determine the columns we want to experiment on.
-    outlier_columns = ['CGM-glucosewaarde (mmol/l)']
+    outlier_columns = ['Invoer bloedglucose (mmol/l)', 'Invoer koolhydraatverbruik (g)']
     # Create the outlier classes.
     OutlierDistr = DistributionBasedOutlierDetection()
     OutlierDist = DistanceBasedOutlierDetection()
@@ -58,6 +70,8 @@ def main():
             # And try out all different approaches. Note that we have done some optimization
             # of the parameter values for each of the approaches by visual inspection.
             dataset = OutlierDistr.chauvenet(dataset, col, FLAGS.C)
+            print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
+
             DataViz.plot_binary_outliers(
                 dataset, col, col + '_outlier')
 
@@ -67,6 +81,7 @@ def main():
 
             print(f"Applying mixture model for column {col}")
             dataset = OutlierDistr.mixture_model(dataset, col)
+            print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
             DataViz.plot_dataset(dataset, [
                                  col, col + '_mixture'], ['exact', 'exact'], ['line', 'points'])
             # This requires:
@@ -78,6 +93,7 @@ def main():
             try:
                 dataset = OutlierDist.simple_distance_based(
                     dataset, [col], 'euclidean', FLAGS.dmin, FLAGS.fmin)
+                print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
                 DataViz.plot_binary_outliers(
                     dataset, col, 'simple_dist_outlier')
             except MemoryError as e:
@@ -90,6 +106,7 @@ def main():
             try:
                 dataset = OutlierDist.local_outlier_factor(
                     dataset, [col], 'euclidean', FLAGS.K)
+                print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
                 DataViz.plot_dataset(dataset, [col, 'lof'], [
                                      'exact', 'exact'], ['line', 'points'])
             except MemoryError as e:

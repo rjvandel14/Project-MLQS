@@ -156,7 +156,7 @@ class VisualizeDataset:
         data_table.loc[:,:] = data_table.dropna(axis=0, subset=[col, outlier_col])
         data_table.loc[:,outlier_col] = data_table[outlier_col].astype('bool')
         f, xar = plt.subplots()
-        xfmt = md.DateFormatter('%H:%M')
+        xfmt = md.DateFormatter('%Y-%m-%d')
         xar.xaxis.set_major_formatter(xfmt)
         plt.xlabel('time')
         plt.ylabel('value')
@@ -164,6 +164,7 @@ class VisualizeDataset:
         xar.plot(data_table.index[data_table[outlier_col]], data_table[col][data_table[outlier_col]], 'r+')
         xar.plot(data_table.index[~data_table[outlier_col]], data_table[col][~data_table[outlier_col]], 'b+')
         plt.legend(['outlier ' + col, 'no_outlier_' + col], numpoints=1, fontsize='xx-small', loc='upper center',  ncol=2, fancybox=True, shadow=True)
+        plt.xticks(rotation=45)
         self.save(plt)
         plt.show()
 
