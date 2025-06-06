@@ -42,7 +42,7 @@ def main():
     # Step 1: Let us see whether we have some outliers we would prefer to remove.
 
     # Determine the columns we want to experiment on.
-    outlier_columns = ['acc_phone_x', 'light_phone_lux']
+    outlier_columns = ['CGM-glucosewaarde (mmol/l)']
     # Create the outlier classes.
     OutlierDistr = DistributionBasedOutlierDetection()
     OutlierDist = DistanceBasedOutlierDetection()
@@ -106,7 +106,8 @@ def main():
             dataset.loc[dataset[f'{col}_outlier'] == True, col] = np.nan
             del dataset[col + '_outlier']
 
-        dataset.to_csv(DATA_PATH / RESULT_FNAME)
+        dataset.to_csv(RESULT_FNAME)
+print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
 
 
 if __name__ == '__main__':
