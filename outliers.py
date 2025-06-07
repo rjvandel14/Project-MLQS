@@ -54,7 +54,10 @@ def main():
     # Step 1: Let us see whether we have some outliers we would prefer to remove.
 
     # Determine the columns we want to experiment on.
-    outlier_columns = ['Invoer bloedglucose (mmol/l)', 'Invoer koolhydraatverbruik (g)']
+    outlier_columns = ['CGM-glucosewaarde (mmol/l)', 'Hoeveelheid', "Duur (minuten)", "Invoer bloedglucose (mmol/l)",  
+                       "Invoer koolhydraatverbruik (g)", "Koolhydraatratio", "Toegediende insuline (eenh.)_bolus"
+                       ]
+    
     # Create the outlier classes.
     OutlierDistr = DistributionBasedOutlierDetection()
     OutlierDist = DistanceBasedOutlierDetection()
@@ -81,19 +84,16 @@ def main():
 
             print(f"Applying mixture model for column {col}")
             dataset = OutlierDistr.mixture_model(dataset, col)
-            print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
             DataViz.plot_dataset(dataset, [
                                  col, col + '_mixture'], ['exact', 'exact'], ['line', 'points'])
-            # This requires:
-            # n_data_points * n_data_points * point_size =
-            # 31839 * 31839 * 32 bits = ~4GB available memory
+            
 
     elif FLAGS.mode == 'distance':
         for col in outlier_columns:
             try:
                 dataset = OutlierDist.simple_distance_based(
                     dataset, [col], 'euclidean', FLAGS.dmin, FLAGS.fmin)
-                print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
+                print(f"{col} → {dataset['simple_dist_outlier'].sum} outliers detected.")
                 DataViz.plot_binary_outliers(
                     dataset, col, 'simple_dist_outlier')
             except MemoryError as e:
