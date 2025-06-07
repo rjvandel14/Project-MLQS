@@ -58,7 +58,7 @@ class DistributionBasedOutlierDetection:
         print('Applying mixture models')
         # Fit a mixture model to our data.
         data = data_table[data_table[col].notnull()][col]
-        g = GaussianMixture(n_components=3, max_iter=100, n_init=1)
+        g = GaussianMixture(n_components=4, max_iter=100, n_init=1)
         reshaped_data = np.array(data.values.reshape(-1, 1))
         g.fit(reshaped_data)
 

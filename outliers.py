@@ -78,14 +78,24 @@ def main():
             DataViz.plot_binary_outliers(
                 dataset, col, col + '_outlier')
 
+         
     elif FLAGS.mode == 'mixture':
-
         for col in outlier_columns:
-
             print(f"Applying mixture model for column {col}")
             dataset = OutlierDistr.mixture_model(dataset, col)
-            DataViz.plot_dataset(dataset, [
-                                 col, col + '_mixture'], ['exact', 'exact'], ['line', 'points'])
+
+            # Determine threshold at 5% lowest likelihood (you can adjust this)
+            threshold = dataset[col + '_mixture'].quantile(0.01)
+
+            # Flag outliers: those with likelihood below the threshold
+            dataset[col + '_outlier'] = dataset[col + '_mixture'] < threshold
+
+            # Count and print number of outliers
+            num_outliers = dataset[col + '_outlier'].sum()
+            print(f"{col} → {num_outliers} outliers detected (bottom 1% of likelihoods)")
+
+            # Plot just like in Chauvenet
+            DataViz.plot_binary_outliers(dataset, col, col + '_outlier')
             
 
     elif FLAGS.mode == 'distance':
@@ -93,7 +103,7 @@ def main():
             try:
                 dataset = OutlierDist.simple_distance_based(
                     dataset, [col], 'euclidean', FLAGS.dmin, FLAGS.fmin)
-                print(f"{col} → {dataset['simple_dist_outlier'].sum} outliers detected.")
+                print(f"{col} → {dataset['simple_dist_outlier'].sum()} outliers detected.")
                 DataViz.plot_binary_outliers(
                     dataset, col, 'simple_dist_outlier')
             except MemoryError as e:
@@ -112,6 +122,30 @@ def main():
             except MemoryError as e:
                 print('Not enough memory available for lof...')
                 print('Skipping.')
+
+    elif FLAGS.mode == 'LOF':
+        for col in outlier_columns:
+            try:
+                dataset_small = dataset.sample(5000)
+
+                # Compute LOF scores
+                dataset_small = OutlierDist.local_outlier_factor(
+                    dataset_small, [col], 'euclidean', FLAGS.K)
+
+                # Define a threshold, e.g. LOF > 1.5 is considered an outlier
+                lof_threshold = 1.5
+                dataset_small[col + '_outlier'] = dataset_small['lof'] > lof_threshold
+
+                # Print number of outliers
+                print(f"{col} → {dataset_small[col + '_outlier'].sum()} outliers detected using LOF (LOF > {lof_threshold}).")
+
+                # Plot binary outliers
+                DataViz.plot_binary_outliers(dataset_small, col, col + '_outlier')
+
+            except MemoryError as e:
+                print('Not enough memory available for LOF...')
+                print('Skipping.')
+
 
     elif FLAGS.mode == 'final':
 
