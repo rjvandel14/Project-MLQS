@@ -84,7 +84,7 @@ def main():
             print(f"Applying mixture model for column {col}")
             dataset = OutlierDistr.mixture_model(dataset, col)
 
-            # Determine threshold at 5% lowest likelihood (you can adjust this)
+            # Determine threshold at 1% lowest likelihood (you can adjust this)
             threshold = dataset[col + '_mixture'].quantile(0.01)
 
             # Flag outliers: those with likelihood below the threshold
@@ -111,17 +111,17 @@ def main():
                     'Not enough memory available for simple distance-based outlier detection...')
                 print('Skipping.')
 
-    elif FLAGS.mode == 'LOF':
-        for col in outlier_columns:
-            try:
-                dataset = OutlierDist.local_outlier_factor(
-                    dataset, [col], 'euclidean', FLAGS.K)
-                print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
-                DataViz.plot_dataset(dataset, [col, 'lof'], [
-                                     'exact', 'exact'], ['line', 'points'])
-            except MemoryError as e:
-                print('Not enough memory available for lof...')
-                print('Skipping.')
+    # elif FLAGS.mode == 'LOF':
+    #     for col in outlier_columns:
+    #         try:
+    #             dataset = OutlierDist.local_outlier_factor(
+    #                 dataset, [col], 'euclidean', FLAGS.K)
+    #             print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
+    #             DataViz.plot_dataset(dataset, [col, 'lof'], [
+    #                                  'exact', 'exact'], ['line', 'points'])
+    #         except MemoryError as e:
+    #             print('Not enough memory available for lof...')
+    #             print('Skipping.')
 
     elif FLAGS.mode == 'LOF':
         for col in outlier_columns:
