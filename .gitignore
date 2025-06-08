@@ -8,6 +8,10 @@ __pycache__/
 #csv
 *.csv
 
+#figures
+*.png
+*.pdf
+
 # C extensions
 *.so
 

@@ -13,6 +13,7 @@ for df in [basal, bolus, cgm, alarms]:
     df.set_index("Tijdstempel", inplace=True)
     df.sort_index(inplace=True)
 
+
 # Define resampling function
 def resample_mixed(df):
     numeric = df.select_dtypes(include="number")
@@ -32,5 +33,39 @@ merged = cgm_resampled \
     .join(bolus_resampled, rsuffix="_bolus") \
     .join(alarms_resampled, rsuffix="_alarms")
 
+# Fix columns with comma decimals
+columns_with_comma = [
+    'Hoeveelheid', "Invoer bloedglucose (mmol/l)", "Eerste toediening (eenh.)",
+    "Uitgebreide toediening (eenh.)", "Serienummer_bolus", "Invoer koolhydraatverbruik (g)",
+    "Koolhydraatratio", "Toegediende insuline (eenh.)_bolus", "Serienummer_alarms"
+]
+
+for col in columns_with_comma:
+    try:
+        merged[col] = merged[col].astype(str).str.replace(',', '.', regex=False).str.replace(' ', '').astype(float)
+    except Exception as e:
+        print(f"Fout bij conversie van kolom {col}: {e}")
+
+# Attempt full numeric conversion just to be safe
+for col in columns_with_comma:
+    try:
+        merged[col] = pd.to_numeric(merged[col], errors='coerce')
+    except:
+        pass
+
+redundant_columns = ["Serienummer",	"Percentage (%)", "Toegediende insuline (eenh.)", "Serienummer_basal", 'Eerste toediening (eenh.)',	'Uitgebreide toediening (eenh.)', 'Serienummer_bolus', 	'Serienummer_alarms']
+merged = merged.drop(columns=redundant_columns)
+
+
+merged.rename(columns={
+    'Hoeveelheid': 'Insuline units (basal)',
+    'Invoer bloedglucose (mmol/l)': 'BG_input (mmol/l)',
+    'Invoer koolhydraatverbruik (g)': 'Carbohydrates (g)',
+    'Koolhydraatratio': 'Carb ratio',
+    'Toegediende insuline (eenh.)_bolus': 'Insuline units (bolus)',
+    'Duur (minuten)': 'Duration (minutes)',
+    "CGM-glucosewaarde (mmol/l)": "Glucose value (mmol/l)",
+    "Alarm/Gebeurtenis": "Alarm"
+}, inplace=True)
 
 merged.to_csv("Glucose_export.csv")
