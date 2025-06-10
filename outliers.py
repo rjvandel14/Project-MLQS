@@ -40,15 +40,15 @@ final_methods = {
     },
     "Carbohydrates (g)": {
         "method": "mixture",
-        "params": {"n_est": 2, "threshold": 0.01}
+        "params": {"n_est": 2, "quantile": 0.01}
     },
     "BG_input (mmol/l)": {
         "method": "mixture",
-        "params": {"n_est": 3, "threshold": 0.05}
+        "params": {"n_est": 3, "quantile": 0.05}
     },
     "Insuline units (bolus)": {
         "method": "mixture",
-        "params": {"n_est": 3, "threshold": 0.01}
+        "params": {"n_est": 3, "quantile": 0.01}
     },
     "Glucose value (mmol/l)": {
         "method": "chauvenet",
@@ -76,6 +76,7 @@ def main():
     #                    ]
     
     outlier_columns = list(final_methods.keys())
+ 
 
     # Create the outlier classes.
     OutlierDistr = DistributionBasedOutlierDetection()
@@ -105,7 +106,7 @@ def main():
             dataset = OutlierDistr.mixture_model(dataset, col)
 
             # Determine threshold at 1% lowest likelihood (you can adjust this)
-            threshold = dataset[col + '_mixture'].quantile(0.01)
+            threshold = dataset[col + '_mixture'].quantile(0.05)
 
             # Flag outliers: those with likelihood below the threshold
             dataset[col + '_outlier'] = dataset[col + '_mixture'] < threshold
@@ -180,34 +181,31 @@ def main():
                 dataset.loc[dataset[f"{col}_outlier"], col] = -2
                 del dataset[f"{col}_outlier"]
 
+        
             elif method == "mixture":
                 n_est = config["params"]["n_est"]
+                quantile = config["params"]["quantile"]
+
+                # Fit mixture model and get likelihoods
                 dataset = OutlierDistr.mixture_model(dataset, col, n_components=n_est)
-                threshold = dataset[col + "_mixture"].quantile(config["params"]["threshold"])
+                
+                # Fix: threshold on the *likelihoods*, not on class labels
+                threshold = dataset[col + "_mixture"].quantile(quantile)
                 dataset[col + "_outlier"] = dataset[col + "_mixture"] < threshold
+
+                # Apply -2 replacement
                 dataset.loc[dataset[col + "_outlier"], col] = -2
                 dataset.drop(columns=[col + "_mixture", col + "_outlier"], inplace=True)
+
 
             elif method == "distance":
                 dmin = config["params"]["dmin"]
                 fmin = config["params"]["fmin"]
                 dataset = OutlierDist.simple_distance_based(dataset, [col], "euclidean", dmin, fmin)
-                # dataset.loc[dataset["simple_dist_outlier"], col] = -2
                 dataset.loc[dataset["simple_dist_outlier"].fillna(False), col] = -2
                 dataset.drop(columns=["simple_dist_outlier"], inplace=True)
-
-
-
-    # Count total number of -2 values per column
-    for col in final_methods:
-        count = (dataset[col] == -2).sum()
-        print(f"{col}: {count} replaced values")
-    
-    print(f"Number of rows with at least one -2 value: {(dataset[final_methods.keys()] == -2).any(axis=1).sum()}")
-
-
-
-print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
+    dataset.to_csv(RESULT_FNAME)
+    print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
 
 
 
