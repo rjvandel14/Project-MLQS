@@ -12,6 +12,7 @@ for df in [basal, bolus, cgm, alarms]:
     df["Tijdstempel"] = pd.to_datetime(df["Tijdstempel"], dayfirst=True, errors="coerce")
     df.set_index("Tijdstempel", inplace=True)
     df.sort_index(inplace=True)
+    df.index.name = "Timestamp"
 
 
 # Define resampling function
@@ -58,7 +59,6 @@ merged = merged.drop(columns=redundant_columns)
 
 
 merged.rename(columns={
-    'Tijdstempel': 'Timestemp',
     'Hoeveelheid': 'Insuline units (basal)',
     'Invoer bloedglucose (mmol/l)': 'BG_input (mmol/l)',
     'Invoer koolhydraatverbruik (g)': 'Carbohydrates (g)',

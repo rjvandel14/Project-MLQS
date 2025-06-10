@@ -32,8 +32,8 @@ def main():
     print_flags()
 
     # Load dataset
-    dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Timestemp"])
-    dataset.set_index("Timestemp", inplace=True)
+    dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Timestamp"])
+    dataset.set_index("Timestamp", inplace=True)
 
     # We'll create an instance of our visualization class to plot the results.
     DataViz = VisualizeDataset(__file__)
