@@ -31,21 +31,9 @@ def print_flags():
 def main():
     print_flags()
 
-    # Load your own dataset directly
+    # Load dataset
     dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Tijdstempel"])
     dataset.set_index("Tijdstempel", inplace=True)
-
-    kolommen_met_komma = [
-    'Hoeveelheid', "Invoer bloedglucose (mmol/l)", "Eerste toediening (eenh.)",
-    "Uitgebreide toediening (eenh.)", "Serienummer_bolus", "Invoer koolhydraatverbruik (g)",
-    "Koolhydraatratio", "Toegediende insuline (eenh.)_bolus", "Serienummer_alarms"
-    ]
-
-    for col in kolommen_met_komma:
-        try:
-            dataset[col] = dataset[col].astype(str).str.replace(',', '.', regex=False).str.replace(' ', '').astype(float)
-        except Exception as e:
-            print(f"Fout bij conversie van kolom {col}: {e}")
 
     # We'll create an instance of our visualization class to plot the results.
     DataViz = VisualizeDataset(__file__)
@@ -54,8 +42,8 @@ def main():
     # Step 1: Let us see whether we have some outliers we would prefer to remove.
 
     # Determine the columns we want to experiment on.
-    outlier_columns = ['CGM-glucosewaarde (mmol/l)', 'Hoeveelheid', "Duur (minuten)", "Invoer bloedglucose (mmol/l)",  
-                       "Invoer koolhydraatverbruik (g)", "Koolhydraatratio", "Toegediende insuline (eenh.)_bolus"
+    outlier_columns = ['Glucose value (mmol/l)', 'Insuline units (basal)', "Duration (minutes)", "BG_input (mmol/l)",  
+                       "Carbohydrates (g)", "Carb ratio", "Insuline units (bolus)"
                        ]
     
     # Create the outlier classes.
@@ -111,17 +99,6 @@ def main():
                     'Not enough memory available for simple distance-based outlier detection...')
                 print('Skipping.')
 
-    # elif FLAGS.mode == 'LOF':
-    #     for col in outlier_columns:
-    #         try:
-    #             dataset = OutlierDist.local_outlier_factor(
-    #                 dataset, [col], 'euclidean', FLAGS.K)
-    #             print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
-    #             DataViz.plot_dataset(dataset, [col, 'lof'], [
-    #                                  'exact', 'exact'], ['line', 'points'])
-    #         except MemoryError as e:
-    #             print('Not enough memory available for lof...')
-    #             print('Skipping.')
 
     elif FLAGS.mode == 'LOF':
         for col in outlier_columns:
