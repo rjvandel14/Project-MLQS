@@ -58,6 +58,7 @@ merged = merged.drop(columns=redundant_columns)
 
 
 merged.rename(columns={
+    'Tijdstempel': 'Timestemp',
     'Hoeveelheid': 'Insuline units (basal)',
     'Invoer bloedglucose (mmol/l)': 'BG_input (mmol/l)',
     'Invoer koolhydraatverbruik (g)': 'Carbohydrates (g)',
@@ -67,5 +68,17 @@ merged.rename(columns={
     "CGM-glucosewaarde (mmol/l)": "Glucose value (mmol/l)",
     "Alarm/Gebeurtenis": "Alarm"
 }, inplace=True)
+
+# Translate categorical values
+merged["Insulinetype"] = merged["Insulinetype"].replace({
+    "Gepland": "Scheduled",
+    "Tijdelijk": "Temporary",
+    "Onderbreken": "Suspended"
+})
+
+merged["Insulinetype_bolus"] = merged["Insulinetype_bolus"].replace({
+    "Normaal": "Normal"
+})
+
 
 merged.to_csv("Glucose_export.csv")
