@@ -27,6 +27,35 @@ def print_flags():
     for key, value in vars(FLAGS).items():
         print(key + ' : ' + str(value))
 
+# final model selections per attribute
+
+final_methods = {
+    "Duration (minutes)": {
+        "method": "chauvenet",
+        "params": {"C": 5}
+    },
+    "Insuline units (basal)": {
+        "method": "distance",
+        "params": {"dmin": 0.1, "fmin": 0.98}
+    },
+    "Carbohydrates (g)": {
+        "method": "mixture",
+        "params": {"n_est": 2, "threshold": 0.01}
+    },
+    "BG_input (mmol/l)": {
+        "method": "mixture",
+        "params": {"n_est": 3, "threshold": 0.05}
+    },
+    "Insuline units (bolus)": {
+        "method": "mixture",
+        "params": {"n_est": 3, "threshold": 0.01}
+    },
+    "Glucose value (mmol/l)": {
+        "method": "chauvenet",
+        "params": {"C": 2}
+    }
+}
+
 
 def main():
     print_flags()
@@ -50,6 +79,7 @@ def main():
     OutlierDistr = DistributionBasedOutlierDetection()
     OutlierDist = DistanceBasedOutlierDetection()
     #chose one of the outlier methods: chauvenet, mixture, distance or LOF via the argument parser at the bottom of this page. 
+
 
     if FLAGS.mode == 'chauvenet':
 
@@ -124,17 +154,52 @@ def main():
                 print('Skipping.')
 
 
+    # elif FLAGS.mode == 'final':
+
+    #     # We use Chauvenet's criterion for the final version and apply it to all but the label data...
+    #     for col in [c for c in dataset.columns if not 'label' in c]:
+
+    #         print(f'Measurement is now: {col}')
+    #         dataset = OutlierDistr.chauvenet(dataset, col, FLAGS.C)
+    #         dataset.loc[dataset[f'{col}_outlier'] == True, col] = np.nan
+    #         del dataset[col + '_outlier']
+
+    #     dataset.to_csv(RESULT_FNAME)
+    
+    
     elif FLAGS.mode == 'final':
 
-        # We use Chauvenet's criterion for the final version and apply it to all but the label data...
-        for col in [c for c in dataset.columns if not 'label' in c]:
+        for col, config in final_methods.items():
+            method = config["method"]
+            print(f"Processing column '{col}' using method: {method}")
 
-            print(f'Measurement is now: {col}')
-            dataset = OutlierDistr.chauvenet(dataset, col, FLAGS.C)
-            dataset.loc[dataset[f'{col}_outlier'] == True, col] = np.nan
-            del dataset[col + '_outlier']
+            if method == "chauvenet":
+                C = config["params"]["C"]
+                dataset = OutlierDistr.chauvenet(dataset, col, C)
+                dataset.loc[dataset[f"{col}_outlier"] == True, col] = -2
+                del dataset[f"{col}_outlier"]
+
+            elif method == "mixture":
+                n_est = config["params"]["n_est"]
+                threshold = config["params"]["threshold"]
+
+                # Fit mixture model with specified n_est
+                dataset = OutlierDistr.mixture_model(dataset, col, n_components=n_est)
+                dataset[col + "_outlier"] = dataset[col + "_mixture"] < threshold
+                dataset.loc[dataset[col + "_outlier"] == True, col] = -2
+                dataset.drop(columns=[col + "_mixture", col + "_outlier"], inplace=True)
+
+            elif method == "distance":
+                dmin = config["params"]["dmin"]
+                fmin = config["params"]["fmin"]
+
+                dataset = OutlierDist.simple_distance_based(dataset, [col], "euclidean", dmin, fmin)
+                dataset.loc[dataset["simple_dist_outlier"] == True, col] = -2
+                dataset.drop(columns=["simple_dist_outlier"], inplace=True)
 
         dataset.to_csv(RESULT_FNAME)
+        print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
+
 print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
 
 
