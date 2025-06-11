@@ -6,15 +6,40 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from outlierschapter.KalmanFilters import KalmanFilters
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error
+
+def find_best_glucose_window(df, imputer, windows=[5, 10, 15, 20, 30, 45, 50, 55, 60]):
+    col = 'Glucose value (mmol/l)'
+    original = df.copy()
+
+    known = df[df[col].notna()]
+    test_indices = known.sample(frac=0.1, random_state=42).index
+    true_values = df.loc[test_indices, col]
+
+    errors = {}
+
+    for w in windows:
+        test_df = df.copy()
+        test_df.loc[test_indices, col] = np.nan
+
+        imputed = imputer.impute_glucose_sliding(test_df, window_minutes=w)
+        preds = imputed.loc[test_indices, col]
+
+        error = mean_absolute_error(true_values, preds)
+        errors[w] = error
+        print(f"Window {w} min → MAE: {error:.3f}")
+
+    best_window = min(errors, key=errors.get)
+    print(f"\n Best window: {best_window} min (MAE = {errors[best_window]:.3f})")
+    return best_window, errors
 
 class DomainSpecificImputation:
 
     def __init__(self):
         self.kf = KalmanFilters()
     
-    def impute_glucose_sliding(self, df, window_minutes=60):
+    def impute_glucose_sliding_dynamic(self, df, max_window_minutes=60, step=5, min_points=2):
         col = 'Glucose value (mmol/l)'
-        
         if col not in df.columns:
             return df
 
@@ -24,25 +49,28 @@ class DomainSpecificImputation:
 
         for t in missing_indices:
             center = df.at[t, 'time_index']
-            lower_bound = center - window_minutes
-            upper_bound = center + window_minutes
 
-            # Get known values in window
-            window = df[(df['time_index'] >= lower_bound) & (df['time_index'] <= upper_bound) & (df[col].notna())]
+            # Try increasingly larger windows
+            for window in range(step, max_window_minutes + step, step):
+                lower_bound = center - window
+                upper_bound = center + window
 
-            if len(window) >= 2:
-                X = window[['time_index']]
-                y = window[col]
-                model = LinearRegression()
-                model.fit(X, y)
-                df.at[t, col] = model.predict([[center]])[0]
-            else:
-                # Optional: fill with global median if not enough data
-                df.at[t, col] = df[col].median()
+                window_df = df[(df['time_index'] >= lower_bound) & (df['time_index'] <= upper_bound) & (df[col].notna())]
+
+                if len(window_df) >= min_points:
+                    X = window_df[['time_index']]
+                    y = window_df[col]
+                    model = LinearRegression()
+                    model.fit(X, y)
+                    df.at[t, col] = model.predict([[center]])[0]
+                    break  # Stop expanding the window after successful imputation
+
+            # Optional fallback: interpolate if no good window found
+            if pd.isna(df.at[t, col]):
+                df.at[t, col] = df[col].interpolate(method="linear").at[t]
 
         df.drop(columns='time_index', inplace=True)
         return df
-
     def impute_basal_insulin(self, df):
         # Work directly on the real columns
         last_type = None
@@ -87,9 +115,19 @@ class DomainSpecificImputation:
 
         # Case 4: Apply Kalman filter separately per type
         for typ in ['Scheduled', 'Temporary']:
-            mask = df['Insulinetype'].str.contains(typ, na=False)
+            mask = df['Insulinetype'] == typ
             if mask.any():
                 df.loc[mask] = self.kf.apply_kalman_filter(df.loc[mask], 'Insuline units (basal)')
+        
+        # Propagate insulin values from Scheduled/Temporary to Busy Scheduled/Temporary
+        for typ in ['Scheduled', 'Temporary']:
+            last_value = None
+            for t in df.index:
+                type_val = df.at[t, 'Insulinetype']
+                if type_val == typ:
+                    last_value = df.at[t, 'Insuline units (basal)']
+                elif type_val == f"Busy {typ}" and last_value is not None:
+                    df.at[t, 'Insuline units (basal)'] = last_value
 
         return df
     
