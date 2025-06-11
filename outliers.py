@@ -1,11 +1,6 @@
-##############################################################
-#                                                            #
-#    Mark Hoogendoorn and Burkhardt Funk (2017)              #
-#    Machine Learning for the Quantified Self                #
-#    Springer                                                #
-#    Chapter 3                                               #
-#                                                            #
-##############################################################
+# Used and edited:
+# Chapter 3 MLQS Springer by Mark Hoogendoorn and Burkhardt Funk (2017)   
+
 
 from util.VisualizeDataset import VisualizeDataset
 from outlierschapter.OutlierDetection import DistributionBasedOutlierDetection
@@ -58,12 +53,13 @@ def main():
     print_flags()
 
     # Load dataset
-    dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Timestamp"])
+    # dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Timestamp"])
+    dataset = pd.read_csv(FLAGS.input, parse_dates=["Timestamp"])
     dataset.set_index("Timestamp", inplace=True)
+
 
     # We'll create an instance of our visualization class to plot the results.
     DataViz = VisualizeDataset(__file__)
-    
 
     # Step 1: Let us see whether we have some outliers we would prefer to remove.
     
@@ -184,8 +180,11 @@ def main():
                 dataset = OutlierDist.simple_distance_based(dataset, [col], "euclidean", dmin, fmin)
                 dataset.loc[dataset["simple_dist_outlier"].fillna(False), col] = np.nan
                 dataset.drop(columns=["simple_dist_outlier"], inplace=True)
-    dataset.to_csv(RESULT_FNAME)
-    print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
+    # dataset.to_csv(RESULT_FNAME)
+    # print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
+
+    dataset.to_csv(FLAGS.output)
+    print(f"Outlier-cleaned data saved to: {FLAGS.output}")
 
 
 
@@ -193,6 +192,11 @@ if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--input', type=str, default='Glucose_export.csv',
+                    help="Input CSV file with glucose data")
+    
+    parser.add_argument('--output', type=str, default='result_outliers.csv',
+                    help="Output CSV file name")
 
     parser.add_argument('--mode', type=str, default='final',
                         help="Select what version to run: LOF, distance, mixture, chauvenet or final \
