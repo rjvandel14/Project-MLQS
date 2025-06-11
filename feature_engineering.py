@@ -7,35 +7,38 @@ df = pd.read_csv('Glucose_export.csv')
 df['Timestamp'] = pd.to_datetime(df['Timestamp'])
 df.set_index('Timestamp', inplace=True)
 
-#Set the rolling window to 30 minutes
+#Day of week feature
+df['day_of_week'] = df.index.dayofweek
+
+#Set the rolling window to 30 minutes checken
 window = '30min'
 numeric_columns = df.select_dtypes(include='number').columns
-new_features = ['min', 'max', 'mean', 'std']
+new_features = ['min', 'max', 'mean', "median",  'std']
 
 for col in numeric_columns:
     for feature in new_features:
         agg_glucose = df[col].rolling(window).agg([feature])
         df[feature + '_' + col] = agg_glucose[feature]
 
+#categorize GCM values
 conditions = [
-    df['Glucose value (mmol/l)'] < 4,
-    df['Glucose value (mmol/l)'] >= 11
+    df['Glucose value (mmol/l)'] < 3,
+    (df['Glucose value (mmol/l)'] >= 3) & (df['Glucose value (mmol/l)'] <= 3.8),
+    (df['Glucose value (mmol/l)'] >= 3.9) & (df['Glucose value (mmol/l)'] <= 10),
+    (df['Glucose value (mmol/l)'] > 10) & (df['Glucose value (mmol/l)'] <= 13.9),
+    df['Glucose value (mmol/l)'] > 13.9
 ]
-choices = ['low', 'high']
-df['cat_glucose_value (mmol/l)'] = np.select(conditions, choices, default='normal')
+choices = ['very low', 'low', 'normal', 'high', 'very high']
+df['cat_glucose_value (mmol/l)'] = np.select(conditions, choices, default='unknown')
 
-
-#Determine trend, want to add strong decrease/increase?
-df['glucose_diff'] = df['Glucose value (mmol/l)'].diff()
-threshold = 0
+#Calculate trend between t and t-3
+df['glucose_diff'] = df['Glucose value (mmol/l)'] - df['Glucose value (mmol/l)'].shift(3)
 df['glucose_trend'] = np.select(
-    [df['glucose_diff'] > threshold,
-     df['glucose_diff'] < -threshold],
+    [df['glucose_diff'] > 0,
+     df['glucose_diff'] < 0],
     ['increasing', 'decreasing'],
     default='stable'
 )
-df.drop(columns=["glucose_diff"])
-
 
 #Create new column with total insuling and if it only consists of basal
 #need to check after imputation (now often nan because one of the two is nan)
@@ -45,11 +48,9 @@ df['Only basal'] = 1-((df['Insuline units (bolus)'].isna()) | (df['Insuline unit
 print(df.columns)
 print(df.head(20))
 
-
-#remove redundant columns, to be expanded
-redundant = ["glucose_diff"]
-df.drop(columns=redundant)
-
+# #remove redundant columns, to be expanded
+# redundant = ["glucose_diff"]
+# df.drop(columns=redundant)
 
 #CategoricalAbstraction
 # Optionally fill NaNs with a placeholder to avoid issues during encoding
