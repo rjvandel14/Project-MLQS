@@ -10,11 +10,8 @@
 from util.VisualizeDataset import VisualizeDataset
 from outlierschapter.OutlierDetection import DistributionBasedOutlierDetection
 from outlierschapter.OutlierDetection import DistanceBasedOutlierDetection
-import sys
-import copy
 import pandas as pd
 import numpy as np
-from pathlib import Path
 import argparse
 
 # Set up file names and locations.
@@ -44,7 +41,7 @@ final_methods = {
     },
     "BG_input (mmol/l)": {
         "method": "mixture",
-        "params": {"n_est": 3, "quantile": 0.05}
+        "params": {"n_est": 2, "quantile": 0.05}
     },
     "Insuline units (bolus)": {
         "method": "mixture",
@@ -69,11 +66,6 @@ def main():
     
 
     # Step 1: Let us see whether we have some outliers we would prefer to remove.
-
-    # Determine the columns we want to experiment on.
-    # outlier_columns = ['Glucose value (mmol/l)', 'Insuline units (basal)', "Duration (minutes)", "BG_input (mmol/l)",  
-    #                    "Carbohydrates (g)", "Carb ratio", "Insuline units (bolus)"
-    #                    ]
     
     outlier_columns = list(final_methods.keys())
  
@@ -105,7 +97,7 @@ def main():
             print(f"Applying mixture model for column {col}")
             dataset = OutlierDistr.mixture_model(dataset, col)
 
-            # Determine threshold at 1% lowest likelihood (you can adjust this)
+            # Determine threshold at 5% lowest likelihood 
             threshold = dataset[col + '_mixture'].quantile(0.05)
 
             # Flag outliers: those with likelihood below the threshold
@@ -156,18 +148,6 @@ def main():
                 print('Not enough memory available for LOF...')
                 print('Skipping.')
 
-
-    # elif FLAGS.mode == 'final':
-
-    #     # We use Chauvenet's criterion for the final version and apply it to all but the label data...
-    #     for col in [c for c in dataset.columns if not 'label' in c]:
-
-    #         print(f'Measurement is now: {col}')
-    #         dataset = OutlierDistr.chauvenet(dataset, col, FLAGS.C)
-    #         dataset.loc[dataset[f'{col}_outlier'] == True, col] = np.nan
-    #         del dataset[col + '_outlier']
-
-    #     dataset.to_csv(RESULT_FNAME)
     
     
     elif FLAGS.mode == 'final':
@@ -178,7 +158,7 @@ def main():
             if method == "chauvenet":
                 C = config["params"]["C"]
                 dataset = OutlierDistr.chauvenet(dataset, col, C)
-                dataset.loc[dataset[f"{col}_outlier"], col] = -2
+                dataset.loc[dataset[f"{col}_outlier"], col] = np.nan
                 del dataset[f"{col}_outlier"]
 
         
@@ -194,7 +174,7 @@ def main():
                 dataset[col + "_outlier"] = dataset[col + "_mixture"] < threshold
 
                 # Apply -2 replacement
-                dataset.loc[dataset[col + "_outlier"], col] = -2
+                dataset.loc[dataset[col + "_outlier"], col] = np.nan
                 dataset.drop(columns=[col + "_mixture", col + "_outlier"], inplace=True)
 
 
@@ -202,7 +182,7 @@ def main():
                 dmin = config["params"]["dmin"]
                 fmin = config["params"]["fmin"]
                 dataset = OutlierDist.simple_distance_based(dataset, [col], "euclidean", dmin, fmin)
-                dataset.loc[dataset["simple_dist_outlier"].fillna(False), col] = -2
+                dataset.loc[dataset["simple_dist_outlier"].fillna(False), col] = np.nan
                 dataset.drop(columns=["simple_dist_outlier"], inplace=True)
     dataset.to_csv(RESULT_FNAME)
     print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
