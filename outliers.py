@@ -1,20 +1,12 @@
-##############################################################
-#                                                            #
-#    Mark Hoogendoorn and Burkhardt Funk (2017)              #
-#    Machine Learning for the Quantified Self                #
-#    Springer                                                #
-#    Chapter 3                                               #
-#                                                            #
-##############################################################
+# Used and edited:
+# Chapter 3 MLQS Springer by Mark Hoogendoorn and Burkhardt Funk (2017)   
+
 
 from util.VisualizeDataset import VisualizeDataset
 from outlierschapter.OutlierDetection import DistributionBasedOutlierDetection
 from outlierschapter.OutlierDetection import DistanceBasedOutlierDetection
-import sys
-import copy
 import pandas as pd
 import numpy as np
-from pathlib import Path
 import argparse
 
 # Set up file names and locations.
@@ -27,29 +19,58 @@ def print_flags():
     for key, value in vars(FLAGS).items():
         print(key + ' : ' + str(value))
 
+# final model selections per attribute
+
+final_methods = {
+    "Duration (minutes)": {
+        "method": "chauvenet",
+        "params": {"C": 5}
+    },
+    "Insuline units (basal)": {
+        "method": "distance",
+        "params": {"dmin": 0.1, "fmin": 0.98}
+    },
+    "Carbohydrates (g)": {
+        "method": "mixture",
+        "params": {"n_est": 2, "quantile": 0.01}
+    },
+    "BG_input (mmol/l)": {
+        "method": "mixture",
+        "params": {"n_est": 2, "quantile": 0.05}
+    },
+    "Insuline units (bolus)": {
+        "method": "mixture",
+        "params": {"n_est": 3, "quantile": 0.01}
+    },
+    "Glucose value (mmol/l)": {
+        "method": "chauvenet",
+        "params": {"C": 2}
+    }
+}
+
 
 def main():
     print_flags()
 
     # Load dataset
-    dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Timestamp"])
+    # dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Timestamp"])
+    dataset = pd.read_csv(FLAGS.input, parse_dates=["Timestamp"])
     dataset.set_index("Timestamp", inplace=True)
+
 
     # We'll create an instance of our visualization class to plot the results.
     DataViz = VisualizeDataset(__file__)
-    
 
     # Step 1: Let us see whether we have some outliers we would prefer to remove.
-
-    # Determine the columns we want to experiment on.
-    outlier_columns = ['Glucose value (mmol/l)', 'Insuline units (basal)', "Duration (minutes)", "BG_input (mmol/l)",  
-                       "Carbohydrates (g)", "Carb ratio", "Insuline units (bolus)"
-                       ]
     
+    outlier_columns = list(final_methods.keys())
+ 
+
     # Create the outlier classes.
     OutlierDistr = DistributionBasedOutlierDetection()
     OutlierDist = DistanceBasedOutlierDetection()
     #chose one of the outlier methods: chauvenet, mixture, distance or LOF via the argument parser at the bottom of this page. 
+
 
     if FLAGS.mode == 'chauvenet':
 
@@ -72,8 +93,8 @@ def main():
             print(f"Applying mixture model for column {col}")
             dataset = OutlierDistr.mixture_model(dataset, col)
 
-            # Determine threshold at 1% lowest likelihood (you can adjust this)
-            threshold = dataset[col + '_mixture'].quantile(0.01)
+            # Determine threshold at 5% lowest likelihood 
+            threshold = dataset[col + '_mixture'].quantile(0.05)
 
             # Flag outliers: those with likelihood below the threshold
             dataset[col + '_outlier'] = dataset[col + '_mixture'] < threshold
@@ -123,25 +144,59 @@ def main():
                 print('Not enough memory available for LOF...')
                 print('Skipping.')
 
-
+    
+    
     elif FLAGS.mode == 'final':
+        for col, config in final_methods.items():
+            method = config["method"]
+            print(f"Processing column '{col}' using method: {method}")
 
-        # We use Chauvenet's criterion for the final version and apply it to all but the label data...
-        for col in [c for c in dataset.columns if not 'label' in c]:
+            if method == "chauvenet":
+                C = config["params"]["C"]
+                dataset = OutlierDistr.chauvenet(dataset, col, C)
+                dataset.loc[dataset[f"{col}_outlier"], col] = np.nan
+                del dataset[f"{col}_outlier"]
 
-            print(f'Measurement is now: {col}')
-            dataset = OutlierDistr.chauvenet(dataset, col, FLAGS.C)
-            dataset.loc[dataset[f'{col}_outlier'] == True, col] = np.nan
-            del dataset[col + '_outlier']
+        
+            elif method == "mixture":
+                n_est = config["params"]["n_est"]
+                quantile = config["params"]["quantile"]
 
-        dataset.to_csv(RESULT_FNAME)
-print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
+                # Fit mixture model and get likelihoods
+                dataset = OutlierDistr.mixture_model(dataset, col, n_components=n_est)
+                
+                # Fix: threshold on the *likelihoods*, not on class labels
+                threshold = dataset[col + "_mixture"].quantile(quantile)
+                dataset[col + "_outlier"] = dataset[col + "_mixture"] < threshold
+
+                # Apply -2 replacement
+                dataset.loc[dataset[col + "_outlier"], col] = np.nan
+                dataset.drop(columns=[col + "_mixture", col + "_outlier"], inplace=True)
+
+
+            elif method == "distance":
+                dmin = config["params"]["dmin"]
+                fmin = config["params"]["fmin"]
+                dataset = OutlierDist.simple_distance_based(dataset, [col], "euclidean", dmin, fmin)
+                dataset.loc[dataset["simple_dist_outlier"].fillna(False), col] = np.nan
+                dataset.drop(columns=["simple_dist_outlier"], inplace=True)
+    # dataset.to_csv(RESULT_FNAME)
+    # print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
+
+    dataset.to_csv(FLAGS.output)
+    print(f"Outlier-cleaned data saved to: {FLAGS.output}")
+
 
 
 if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--input', type=str, default='Glucose_export.csv',
+                    help="Input CSV file with glucose data")
+    
+    parser.add_argument('--output', type=str, default='result_outliers.csv',
+                    help="Output CSV file name")
 
     parser.add_argument('--mode', type=str, default='final',
                         help="Select what version to run: LOF, distance, mixture, chauvenet or final \
@@ -166,3 +221,4 @@ if __name__ == '__main__':
     FLAGS, unparsed = parser.parse_known_args()
 
     main()
+
