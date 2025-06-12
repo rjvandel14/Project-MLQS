@@ -3,12 +3,9 @@ import pandas as pd
 from TemporalAbstraction import CategoricalAbstraction 
 
 
-df = pd.read_csv('Glucose_export.csv')
+df = pd.read_csv('Glucose_export_basal_imputed.csv')
 df['Timestamp'] = pd.to_datetime(df['Timestamp'])
 df.set_index('Timestamp', inplace=True)
-
-#Day of week feature
-df['day_of_week'] = df.index.dayofweek
 
 #Set the rolling window to 30 minutes checken
 window = '30min'
@@ -29,36 +26,26 @@ conditions = [
     df['Glucose value (mmol/l)'] > 13.9
 ]
 choices = ['very low', 'low', 'normal', 'high', 'very high']
-df['cat_glucose_value (mmol/l)'] = np.select(conditions, choices, default='unknown')
+df['cat_glucose_value (mmol/l)'] = np.select(conditions, choices, default='normal')
 
 #Calculate trend between t and t-3
 df['glucose_diff'] = df['Glucose value (mmol/l)'] - df['Glucose value (mmol/l)'].shift(3)
 df['glucose_trend'] = np.select(
     [df['glucose_diff'] > 0,
-     df['glucose_diff'] < 0],
-    ['increasing', 'decreasing'],
-    default='stable'
+     df['glucose_diff'] == 0,
+     df['glucose_diff'] < 0,
+     ],
+    ['increasing', 'stable', 'decreasing']
 )
 
-#Create new column with total insuling and if it only consists of basal
-#need to check after imputation (now often nan because one of the two is nan)
+#Create new column with total insuling and if it only consists of basal --> more interesting to do 1 IF both present?
 df['Insulin_units_total'] = df['Insuline units (basal)'] + df['Insuline units (bolus)']
-df['Only basal'] = 1-((df['Insuline units (bolus)'].isna()) | (df['Insuline units (bolus)'] == 0)).astype(int)
+df['Only basal'] = ((df['Insuline units (bolus)'].isna()) | (df['Insuline units (bolus)'] == 0)).astype(int)
 
-print(df.columns)
-print(df.head(20))
+#Day of week feature
+df['day_of_week'] = df.index.dayofweek
+df.to_csv("feature.csv")
 
-# #remove redundant columns, to be expanded
-# redundant = ["glucose_diff"]
-# df.drop(columns=redundant)
-
-#CategoricalAbstraction
-# Optionally fill NaNs with a placeholder to avoid issues during encoding
-df['glucose_trend'] = df['glucose_trend'].fillna('unknown')
-df['cat_glucose_value (mmol/l)'] = df['cat_glucose_value (mmol/l)'].fillna('unknown')
-df['Insulinetype'] = df['Insulinetype'].fillna('unknown')
-df['Insulinetype_bolus'] = df['Insulinetype_bolus'].fillna('unknown')
-df['Alarm'] = df['Alarm'].fillna('unknown')
 
 # One-hot encode selected categorical columns
 categorical_columns = [
@@ -85,7 +72,7 @@ cols = [col for col in df_encoded.columns if col.startswith((
 
 match = ['like'] * len(cols)
 min_support = 0.2
-window_size = 6
+window_size = 3
 max_pattern_size = 3
 
 abstracted_df = cat_abs.abstract_categorical(
@@ -98,7 +85,5 @@ abstracted_df = cat_abs.abstract_categorical(
 )
 
 abstracted_df.to_csv("featiures_with_patterns.csv", index=False)
-
-df.to_csv("feature.csv")
 
 
