@@ -41,9 +41,9 @@ y_test = df_test['target_majority_category']
 # Initialize the feature selection class
 fs = FeatureSelectionClassification()
 
-# Perform forward selection (e.g., selecting 10 best features)
+# Perform forward selection
 selected_forward, ordered_forward, scores_forward = fs.forward_selection(
-    max_features=8,
+    max_features=5,
     X_train=X_train,
     X_test=X_test,
     y_train=y_train,
@@ -62,3 +62,15 @@ plt.title("Forward Feature Selection Performance")
 plt.grid(True)
 plt.tight_layout()
 plt.savefig("forward_selection_plot.png")
+
+
+selected_columns = ['Timestamp',
+    'Glucose value (mmol/l)',
+    'mean_Glucose value (mmol/l)',
+    'mean_Insuline units (basal)',
+    'temp_pattern_glucose_trend_decreasing(b)Only basal',
+    'median_Insuline units (basal)',
+    'target_majority_category'
+]
+df_train[selected_columns].to_csv("selected_train.csv", index=False)
+df_test[selected_columns].to_csv("selected_test.csv", index=False)
