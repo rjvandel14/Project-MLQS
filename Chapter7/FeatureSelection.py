@@ -47,7 +47,7 @@ class FeatureSelectionClassification:
 
                 # Determine the accuracy of a decision tree learner if we were to add
                 # the feature.
-                pred_y_train, pred_y_test, prob_training_y, prob_test_y = ca.random_forest(X_train[temp_selected_features],
+                pred_y_train, pred_y_test, prob_training_y, prob_test_y = ca.support_vector_machine_with_kernel(X_train[temp_selected_features],
                                                                                            y_train,
                                                                                            X_test[temp_selected_features],
                                                                                            gridsearch=False)

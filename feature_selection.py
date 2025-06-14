@@ -65,12 +65,11 @@ plt.savefig("forward_selection_plot.png")
 
 
 selected_columns = ['Timestamp',
-    'Glucose value (mmol/l)',
-    'mean_Glucose value (mmol/l)',
-    'mean_Insuline units (basal)',
-    'temp_pattern_glucose_trend_decreasing(b)Only basal',
-    'median_Insuline units (basal)',
+    'cat_glucose_value (mmol/l)',
+    'temp_pattern_Alarm_No alarm(b)Insulinetype_Busy Scheduled',
+    'Insulinetype_Busy Temporary',
+    'glucose_diff',
     'target_majority_category'
 ]
-df_train[selected_columns].to_csv("selected_train.csv", index=False)
-df_test[selected_columns].to_csv("selected_test.csv", index=False)
+df_train[selected_columns].to_csv("selected_train_svm.csv", index=False)
+df_test[selected_columns].to_csv("selected_test_svm.csv", index=False)
