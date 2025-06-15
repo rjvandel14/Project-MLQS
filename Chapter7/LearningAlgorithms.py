@@ -72,7 +72,7 @@ class ClassificationAlgorithms:
     # probabilities associated with each class, each class being represented as a column in the data frame.
     # To improve the speed, one can use a CV of 3 only to make it faster
     # Include n_jobs in the GridSearchCV function and set it to -1 to use all processors which could also increase the speed
-    def support_vector_machine_with_kernel(self, train_X, train_y, test_X, C=1,  kernel='rbf', gamma=1e-3, gridsearch=True, print_model_details=False):
+    def support_vector_machine_with_kernel(self, train_X, train_y, test_X, C=1,  kernel='rbf', gamma=1e-3, gridsearch=False, print_model_details=False):
         # Create the model
         if gridsearch:
             tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
