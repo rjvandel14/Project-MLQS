@@ -85,7 +85,8 @@ class ClassificationAlgorithms:
         svm.fit(train_X, train_y.values.ravel())
 
         if gridsearch and print_model_details:
-            print(svm.best_params_)
+            print("Best parameters:", svm.best_params_)
+            print("Best grid search score:", svm.best_score_)
 
         if gridsearch:
             svm = svm.best_estimator_

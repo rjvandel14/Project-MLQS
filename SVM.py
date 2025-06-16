@@ -2,20 +2,21 @@ from Chapter7.LearningAlgorithms import ClassificationAlgorithms
 from Chapter7.Evaluation import ClassificationEvaluation
 
 import pandas as pd
-#from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load data
-train_df = pd.read_csv("data/selected_train_SVM.csv")
-test_df = pd.read_csv("data/selected_test_SVM.csv")
+train_df = pd.read_csv("selected_train_rf.csv")
+test_df = pd.read_csv("selected_test_rf.csv")
 
 # Define features and target
 feature_cols = [
-    "Glucose value (mmol/l)",
-    "mean_Glucose value (mmol/l)",
-    "median_Insuline units (basal)",
-    "temp_pattern_Insulinetype_Scheduled(b)Only basal"
+    "cat_glucose_value (mmol/l)",
+    "temp_pattern_Alarm_No alarm(b)Insulinetype_Busy Scheduled",
+    "Insulinetype_Busy Temporary",
+    "glucose_diff"
 ]
 target_col = "target_majority_category"
 
@@ -33,8 +34,8 @@ pred_y_train, pred_y_test, prob_train_y, prob_test_y = learner.support_vector_ma
     X_train, y_train, X_test, gridsearch=True, print_model_details=True
 )
 
-print(sorted(y_test.unique()))
-#print(sorted(pred_y_test.unique()))
+# print(sorted(y_test.unique()))
+# print(sorted(pred_y_test))
 
 # Evaluate
 print("Test Accuracy:", evaluator.accuracy(y_test, pred_y_test))
@@ -42,6 +43,20 @@ print("F1 Score per class:", evaluator.f1(y_test, pred_y_test))
 print("Precision per class:", evaluator.precision(y_test, pred_y_test))
 print("Recall per class:", evaluator.recall(y_test, pred_y_test))
 
+
+
+# Detailed classification report
+report = classification_report(y_test, pred_y_test, output_dict=True)
+print("Classification report:")
+for label, metrics in report.items():
+    print(f"{label}: {metrics}")
+
+
+# Detailed classification report
+report = classification_report(y_test, pred_y_test, output_dict=True)
+print("Classification report:")
+for label, metrics in report.items():
+    print(f"{label}: {metrics}")
 
 # Confusion matrix
 cm = evaluator.confusion_matrix(y_test, pred_y_test, labels=[0, 1, 2, 3, 4])
