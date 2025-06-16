@@ -79,7 +79,7 @@ class ClassificationAlgorithms:
                          'C': [1, 10, 100]}]
             svm = GridSearchCV(SVC(probability=True), tuned_parameters, cv=5, scoring='accuracy')
         else:
-            svm = SVC(C=C, kernel=kernel, gamma=gamma, probability=True, cache_size=7000)
+            svm = SVC(C=C, kernel=kernel, gamma=gamma, probability=True, cache_size=7000, class_weight='balanced')
 
         # Fit the model
         svm.fit(train_X, train_y.values.ravel())
