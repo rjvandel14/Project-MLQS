@@ -15,3 +15,4 @@ treelib==1.6.1
 Unidecode==1.1.1
 Cython
 seaborn
+keras-tcn
