@@ -12,24 +12,6 @@ df_test = pd.read_csv("all_features_test.csv",parse_dates=["Timestamp"])
 df_train = df_train.fillna(0)
 df_test = df_test.fillna(0)
 
-# def create_target(df):
-#     future_window = 6
-
-#     df['target_majority_category'] = (
-#         df['cat_glucose_value (mmol/l)']
-#         .shift(-future_window + 1)  # shift upward to align current row with future window
-#         .rolling(window=future_window)
-#         .apply(lambda x: x.mode().iloc[0] if len(x) > 0 else np.nan)
-#     )
-
-#     # Drop rows where label couldn't be calculated (e.g. near the end)
-#     df = df.dropna(subset=['target_majority_category'])
-
-#     return df
-
-# df_train = create_target(df_train)
-# df_test = create_target(df_test)
-
 # Define features and target
 X_train = df_train.drop(columns=['target_majority_category'])
 X_train = X_train.select_dtypes(include=[np.number])
@@ -43,11 +25,12 @@ fs = FeatureSelectionClassification()
 
 # Perform forward selection
 selected_forward, ordered_forward, scores_forward = fs.forward_selection(
-    max_features=5,
+    max_features=8,
     X_train=X_train,
     X_test=X_test,
     y_train=y_train,
     y_test=y_test,
+    algorithm = "random_forest",
     gridsearch=False
 )
 
