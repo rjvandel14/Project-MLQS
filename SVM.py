@@ -2,7 +2,6 @@ from Chapter7.LearningAlgorithms import ClassificationAlgorithms
 from Chapter7.Evaluation import ClassificationEvaluation
 
 import pandas as pd
-from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -29,9 +28,11 @@ y_test = test_df[target_col].astype(int)
 learner = ClassificationAlgorithms()
 evaluator = ClassificationEvaluation()
 
+class_weights = {0: 10, 1: 5, 2: 1, 3: 1, 4: 1}
+
 # Train & predict
 pred_y_train, pred_y_test, prob_train_y, prob_test_y = learner.support_vector_machine_with_kernel(
-    X_train, y_train, X_test, gridsearch=True, print_model_details=True
+    X_train, y_train, X_test, gridsearch=True, print_model_details=True, class_weight=class_weights
 )
 
 # print(sorted(y_test.unique()))
@@ -42,12 +43,6 @@ print("Test Accuracy:", evaluator.accuracy(y_test, pred_y_test))
 print("F1 Score per class:", evaluator.f1(y_test, pred_y_test))
 print("Precision per class:", evaluator.precision(y_test, pred_y_test))
 print("Recall per class:", evaluator.recall(y_test, pred_y_test))
-
-# Detailed classification report
-report = classification_report(y_test, pred_y_test, output_dict=True)
-print("Classification report:")
-for label, metrics in report.items():
-    print(f"{label}: {metrics}")
 
 # Detailed classification report
 report = classification_report(y_test, pred_y_test, output_dict=True)
