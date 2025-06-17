@@ -177,7 +177,7 @@ process_glucose_data(
     "data/Insulin data/bolus_data_1.csv",
     "data/alarms_data_1.csv",
     "data/cgm_data_1.csv",
-    "Glucose_export.csv",
+    "new data/Glucose_export.csv",
     cgm2_path="data/cgm_data_2.csv"
 )
 
@@ -187,5 +187,5 @@ process_glucose_data(
     "test_data/Insulin data/bolus_data_1.csv",
     "test_data/alarms_data_1.csv",
     "test_data/cgm_data_1.csv",
-    "Glucose_export_test.csv"
+    "new data/Glucose_export_test.csv"
 )
