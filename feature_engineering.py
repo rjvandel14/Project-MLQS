@@ -37,7 +37,7 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
     #Set the rolling window to 30 minutes checken
     window = '30min'
     numeric_columns = ["Glucose value (mmol/l)", "Insuline units (basal)" ,"Insulin_units_total", 
-                       "BG_input (mmol/l)", "Carbohydrates (g)",	"Carb ratio","Insuline units (bolus)"]
+                       "BG_input (mmol/l)", "Carbohydrates (g)","Carb ratio","Insuline units (bolus)"]
     new_features = ['min', 'max', 'mean', "median",  'std']
 
     for col in numeric_columns:
