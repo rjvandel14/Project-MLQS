@@ -5,6 +5,7 @@ from TemporalAbstraction import CategoricalAbstraction
 def feature_engineering(df, min_support, window_size, max_pattern_size):
     df['Timestamp'] = pd.to_datetime(df['Timestamp'])
     df.set_index('Timestamp', inplace=True)
+    df = df.sort_index()
 
     df = df.drop(columns = ['Duration (minutes)'])
 
