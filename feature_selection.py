@@ -53,15 +53,13 @@ def analyse_features(df_train, df_test, max_features, method):
 df_train = pd.read_csv("new data/all_features_train.csv",parse_dates=["Timestamp"])
 df_test = pd.read_csv("new data/all_features_test.csv",parse_dates=["Timestamp"])
 
-selected_forward, scores_forward = analyse_features(df_train,df_test,8,'random_forest')
+#selected_forward, scores_forward = analyse_features(df_train,df_test,8,'random_forest')
 
-print(selected_forward)
-print(scores_forward)
 selected_columns = ['Timestamp',
-    'Glucose value (mmol/l)', 
-    'median_Glucose value (mmol/l)', 
-    'temp_pattern_Insulinetype_Scheduled(b)glucose_trend_decreasing', 
-    'Insulinetype_Scheduled',
+    'Glucose value (mmol/l)', 'glucose_diff', 
+    'temp_pattern_Insulinetype_Busy Scheduled(c)Only basal', 
+    'temp_pattern_glucose_trend_increasing(b)Insulinetype_Busy Scheduled', 
+    'temp_pattern_Insulinetype_bolus_No Bolus(c)glucose_trend_decreasing',
     'target_majority_category'
 ]
 df_train[selected_columns].to_csv("new data/selected_train_RF.csv", index=False)
