@@ -43,14 +43,11 @@ print("F1 Score per class:", evaluator.f1(y_test, pred_y_test))
 print("Precision per class:", evaluator.precision(y_test, pred_y_test))
 print("Recall per class:", evaluator.recall(y_test, pred_y_test))
 
-
-
 # Detailed classification report
 report = classification_report(y_test, pred_y_test, output_dict=True)
 print("Classification report:")
 for label, metrics in report.items():
     print(f"{label}: {metrics}")
-
 
 # Detailed classification report
 report = classification_report(y_test, pred_y_test, output_dict=True)
