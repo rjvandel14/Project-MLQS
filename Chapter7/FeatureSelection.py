@@ -23,7 +23,7 @@ class FeatureSelectionClassification:
     # Forward selection for classification which selects a pre-defined number of features (max_features)
     # that show the best accuracy. We assume a decision tree learning for this purpose, but
     # this can easily be changed. It return the best features.
-    def forward_selection(self, max_features, X_train, X_test, y_train, y_test, gridsearch):
+    def forward_selection(self, max_features, X_train, X_test, y_train, y_test, algorithm, gridsearch):
         # Start with no features.
         ordered_features = []
         ordered_scores = []
@@ -47,10 +47,16 @@ class FeatureSelectionClassification:
 
                 # Determine the accuracy of a decision tree learner if we were to add
                 # the feature.
-                pred_y_train, pred_y_test, prob_training_y, prob_test_y = ca.support_vector_machine_with_kernel(X_train[temp_selected_features],
-                                                                                           y_train,
-                                                                                           X_test[temp_selected_features],
-                                                                                           gridsearch=False)
+                if algorithm == 'svm_rbf':
+                    pred_y_train, pred_y_test, _, _ = ca.support_vector_machine_with_kernel(X_train[temp_selected_features], y_train, X_test[temp_selected_features], gridsearch=False)
+                elif algorithm == 'decision_tree':
+                    pred_y_train, pred_y_test, _, _ = ca.decision_tree(X_train[temp_selected_features], y_train, X_test[temp_selected_features], gridsearch=False)
+                elif algorithm == 'random_forest':
+                    pred_y_train, pred_y_test, _, _ = ca.random_forest(X_train[temp_selected_features], y_train, X_test[temp_selected_features], gridsearch=False)
+                elif algorithm == 'knn':
+                    pred_y_train, pred_y_test, _, _ = ca.k_nearest_neighbor(X_train[temp_selected_features], y_train, X_test[temp_selected_features], gridsearch=False)
+                else:
+                    raise ValueError(f"Unsupported algorithm: {algorithm}")
                 perf = ce.accuracy(y_test, pred_y_test)
 
                 # If the performance is better than what we have seen so far (we aim for high accuracy)
@@ -163,7 +169,7 @@ class FeatureSelectionRegression:
                 temp_selected_features.remove(f)
 
                 # Determine the score without the feature.
-                pred_y_train, pred_y_test = ra.decision_tree(X_train[temp_selected_features], y_train, X_train[temp_selected_features])
+                pred_y_train, pred_y_test = ra.support_vector_regression_with_kernel(X_train[temp_selected_features], y_train, X_train[temp_selected_features])
                 perf = re.mean_squared_error(y_train, pred_y_train)
                 # If we score better (i.e. a lower mse) without the feature than what we have seen so far
                 # this is the worst feature.
