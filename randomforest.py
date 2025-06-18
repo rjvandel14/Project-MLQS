@@ -17,7 +17,7 @@ X_test = test_df.drop(columns=["target_majority_category", "Timestamp"], errors=
 y_test = test_df["target_majority_category"]
 
 # Define class weights manually
-class_weights = {0: 50, 1: 20, 2: 1, 3: 1, 4: 1}
+class_weights = {0: 50, 1: 30, 2: 1, 3: 1, 4: 1}
 
 
 # Define pipeline (no oversampling)
