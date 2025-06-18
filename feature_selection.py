@@ -53,6 +53,7 @@ def analyse_features(df_train, df_test, max_features, method):
 df_train = pd.read_csv("new data/all_features_train.csv",parse_dates=["Timestamp"])
 df_test = pd.read_csv("new data/all_features_test.csv",parse_dates=["Timestamp"])
 
+#Ran once to extract features.
 #selected_forward, scores_forward = analyse_features(df_train,df_test,8,'random_forest')
 
 selected_columns = ['Timestamp',
@@ -65,14 +66,13 @@ selected_columns = ['Timestamp',
 df_train[selected_columns].to_csv("new data/selected_train_RF.csv", index=False)
 df_test[selected_columns].to_csv("new data/selected_test_RF.csv", index=False)
 
-
-# analyse_features(df_train,df_test,'svm_rbf')
-# selected_columns = ['Timestamp',
-#     'Glucose value (mmol/l)', 
-#     'median_Glucose value (mmol/l)', 
-#     'temp_pattern_Insulinetype_Scheduled(b)glucose_trend_decreasing', 
-#     'Insulinetype_Scheduled',
-#     'target_majority_category'
-# ]
-# df_train[selected_columns].to_csv("new data/selected_train_SVM.csv", index=False)
-# df_test[selected_columns].to_csv("new data/selected_test_SVM.csv", index=False)
+#Ran once to extract features.
+#analyse_features(df_train,df_test,8,'svm_rbf')
+selected_columns = ['Timestamp',
+    'Glucose value (mmol/l)', 'glucose_diff', 
+    'min_Glucose value (mmol/l)', 'cat_glucose_value (mmol/l)_4', 
+    'temp_pattern_Insulinetype_Busy Scheduled(b)Only basal',
+    'target_majority_category'
+]
+df_train[selected_columns].to_csv("new data/selected_train_SVM.csv", index=False)
+df_test[selected_columns].to_csv("new data/selected_test_SVM.csv", index=False)
