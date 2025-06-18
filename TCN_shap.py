@@ -4,7 +4,6 @@ import pandas as pd
 from tcn import TCN
 import seaborn as sns
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 from tensorflow.keras.layers import Dense
