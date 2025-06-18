@@ -2,7 +2,7 @@ import pandas as pd
 from DomainSpecificImputation import DomainSpecificImputation, find_best_glucose_window
 
 # Load train data
-df = pd.read_csv("result_outliers.csv", parse_dates=["Timestamp"])
+df = pd.read_csv("new data/result_outliers.csv", parse_dates=["Timestamp"])
 df.set_index("Timestamp", inplace=True)
 
 # Impute basal insulin
@@ -16,10 +16,10 @@ df = imputer.impute_bolus_insulin(df)
 df = imputer.impute_alarms(df)
 
 # Save result
-df.to_csv("Glucose_export_imputed.csv")
+df.to_csv("new data/Glucose_export_imputed.csv")
 
 # Load test data
-df = pd.read_csv("result_outliers_test.csv", parse_dates=["Timestamp"])
+df = pd.read_csv("new data/result_outliers_test.csv", parse_dates=["Timestamp"])
 df.set_index("Timestamp", inplace=True)
 
 # Impute basal insulin
@@ -33,4 +33,4 @@ df = imputer.impute_bolus_insulin(df)
 df = imputer.impute_alarms(df)
 
 # Save result
-df.to_csv("Glucose_export_imputed_test.csv")
+df.to_csv("new data/Glucose_export_imputed_test.csv")

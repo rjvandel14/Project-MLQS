@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from Chapter7.FeatureSelection import FeatureSelectionClassification
 
 
-df_train = pd.read_csv("all_features_train.csv",parse_dates=["Timestamp"])
-df_test = pd.read_csv("all_features_test.csv",parse_dates=["Timestamp"])
+df_train = pd.read_csv("new data/all_features_train.csv",parse_dates=["Timestamp"])
+df_test = pd.read_csv("new data/all_features_test.csv",parse_dates=["Timestamp"])
 
 # NaN values that are now present are because of de devision by 0
 # So we can fill them in with 0
@@ -54,5 +54,5 @@ selected_columns = ['Timestamp',
     'glucose_diff',
     'target_majority_category'
 ]
-df_train[selected_columns].to_csv("selected_train_svm.csv", index=False)
-df_test[selected_columns].to_csv("selected_test_svm.csv", index=False)
+df_train[selected_columns].to_csv("new data/selected_train.csv", index=False)
+df_test[selected_columns].to_csv("new data/selected_test.csv", index=False)

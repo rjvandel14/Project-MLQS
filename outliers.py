@@ -28,7 +28,7 @@ final_methods = {
     },
     "Insuline units (basal)": {
         "method": "distance",
-        "params": {"dmin": 0.1, "fmin": 0.98}
+        "params": {"dmin": 0.1, "fmin": 0.99}
     },
     "Carbohydrates (g)": {
         "method": "mixture",
@@ -44,7 +44,7 @@ final_methods = {
     },
     "Glucose value (mmol/l)": {
         "method": "chauvenet",
-        "params": {"C": 2}
+        "params": {"C": 1.5}
     }
 }
 
@@ -53,7 +53,6 @@ def main():
     print_flags()
 
     # Load dataset
-    # dataset = pd.read_csv("Glucose_export.csv", parse_dates=["Timestamp"])
     dataset = pd.read_csv(FLAGS.input, parse_dates=["Timestamp"])
     dataset.set_index("Timestamp", inplace=True)
 
@@ -94,7 +93,7 @@ def main():
             dataset = OutlierDistr.mixture_model(dataset, col)
 
             # Determine threshold at 5% lowest likelihood 
-            threshold = dataset[col + '_mixture'].quantile(0.05)
+            threshold = dataset[col + '_mixture'].quantile(0.01)
 
             # Flag outliers: those with likelihood below the threshold
             dataset[col + '_outlier'] = dataset[col + '_mixture'] < threshold
@@ -180,8 +179,6 @@ def main():
                 dataset = OutlierDist.simple_distance_based(dataset, [col], "euclidean", dmin, fmin)
                 dataset.loc[dataset["simple_dist_outlier"].fillna(False), col] = np.nan
                 dataset.drop(columns=["simple_dist_outlier"], inplace=True)
-    # dataset.to_csv(RESULT_FNAME)
-    # print(f"Outlier-cleaned data saved to: {RESULT_FNAME}")
 
     dataset.to_csv(FLAGS.output)
     print(f"Outlier-cleaned data saved to: {FLAGS.output}")
@@ -192,10 +189,10 @@ if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--input', type=str, default='Glucose_export.csv',
+    parser.add_argument('--input', type=str, default='new data/Glucose_export.csv',
                     help="Input CSV file with glucose data")
     
-    parser.add_argument('--output', type=str, default='result_outliers.csv',
+    parser.add_argument('--output', type=str, default='new data/result_outliers.csv',
                     help="Output CSV file name")
 
     parser.add_argument('--mode', type=str, default='final',

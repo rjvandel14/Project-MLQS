@@ -76,10 +76,6 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
     cols += ['Only basal']
 
     match = ['like'] * len(cols)
-    min_support = 0.2
-    window_size = 3
-    max_pattern_size = 2
-
     abstracted_df = cat_abs.abstract_categorical(
         data_table=df.copy(),
         cols=cols,
@@ -105,17 +101,17 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
     return abstracted_df
 
 
-df_train = pd.read_csv("Glucose_export_imputed.csv")
-df_test = pd.read_csv("Glucose_export_imputed_test.csv")
+df_train = pd.read_csv("new data/Glucose_export_imputed.csv")
+df_test = pd.read_csv("new data/Glucose_export_imputed_test.csv")
 
 # Add a column to distinguish between train and test
 df_train['__set__'] = 'train'
 df_test['__set__'] = 'test'
 df_combined = pd.concat([df_train, df_test], ignore_index=True)
 
-df_combined_features = feature_engineering(df_combined, 0.2,3,3)
+df_combined_features = feature_engineering(df_combined, 0.2,3,2)
 df_train_features = df_combined_features[df_combined_features['__set__'] == 'train'].drop(columns='__set__')
 df_test_features = df_combined_features[df_combined_features['__set__'] == 'test'].drop(columns='__set__')
 
-df_train_features.to_csv("all_features_train.csv")
-df_test_features.to_csv("all_features_test.csv")
+df_train_features.to_csv("new data/all_features_train.csv")
+df_test_features.to_csv("new data/all_features_test.csv")
