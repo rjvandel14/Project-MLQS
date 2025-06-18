@@ -109,11 +109,11 @@ shap_values_avg = [sv.mean(axis=1) for sv in shap_values]
 x_explain_avg = x_explain.mean(axis=1)
 
 # Beeswarm plot (summary)
-shap.summary_plot(shap_values_avg[0], x_explain_avg, feature_names=features, show=False)
+shap.summary_plot(shap_values_avg[0], x_explain_avg, feature_names=features, show=True)
 plt.savefig("new data/shap_beeswarm.png", bbox_inches="tight")
 plt.clf()
 
 # Bar plot
-shap.summary_plot(shap_values_avg[0], x_explain_avg, feature_names=features, plot_type="bar", show=False)
+shap.summary_plot(shap_values_avg[0], x_explain_avg, feature_names=features, plot_type="bar", show=True)
 plt.savefig("new data/shap_bar.png", bbox_inches="tight")
 plt.clf()
