@@ -16,4 +16,4 @@ Unidecode==1.1.1
 Cython
 seaborn==0.10.1
 imbalanced-learn==0.6.2
-
+keras-tcn
