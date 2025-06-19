@@ -94,24 +94,24 @@ plt.title("Confusion Matrix - Final TCN Model")
 plt.show()
 
 # === Select background and test samples ===
-# Limit size for performance (especially with DeepExplainer)
+# Limit size for memory usage
 background = x_train[np.random.choice(x_train.shape[0], 100, replace=False)]
 explainer = shap.GradientExplainer(model, background)
 
 # Select a test subset to explain
-x_explain = x_test[:100]  # instead of the whole x_test
+x_explain = x_test[:100]
 shap_values = explainer.shap_values(x_explain)
 
-# Average over time steps: (samples, time_steps, features) → (samples, features)
+# Average over time steps
 shap_values_avg = [sv.mean(axis=1) for sv in shap_values]
 x_explain_avg = x_explain.mean(axis=1)
 
-# === Calculate mean absolute SHAP value per feature ===
-mean_abs_shap = np.mean(np.abs(shap_values_avg[0]), axis=0)  # (features,)
+# Calculate mean absolute SHAP value per feature
+mean_abs_shap = np.mean(np.abs(shap_values_avg[0]), axis=0)
 feature_importance = pd.Series(mean_abs_shap, index=features).sort_values(ascending=False)
 
-# === Show top features ===
-top_n = 10  # choose number of features
+# Top features
+top_n = 10 
 print("\nTop {} features by SHAP importance:".format(top_n))
 print(feature_importance.head(top_n))
 
