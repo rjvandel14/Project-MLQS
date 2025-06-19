@@ -96,7 +96,7 @@ plt.show()
 # === Select background and test samples ===
 # Limit size for performance (especially with DeepExplainer)
 background = x_train[np.random.choice(x_train.shape[0], 100, replace=False)]
-explainer = shap.DeepExplainer(model, background)
+explainer = shap.GradientExplainer(model, background)
 
 # Select a test subset to explain
 x_explain = x_test[:100]  # instead of the whole x_test
