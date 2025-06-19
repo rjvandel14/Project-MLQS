@@ -3,8 +3,6 @@ import numpy as np
 import pandas as pd
 from tcn import TCN
 import seaborn as sns
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.utils import class_weight
 from tensorflow.keras.layers import Dense
@@ -101,19 +99,21 @@ background = x_train[np.random.choice(x_train.shape[0], 100, replace=False)]
 explainer = shap.DeepExplainer(model, background)
 
 # Select a test subset to explain
-x_explain = x_test[:100]
+x_explain = x_test[:100]  # instead of the whole x_test
 shap_values = explainer.shap_values(x_explain)
 
 # Average over time steps: (samples, time_steps, features) → (samples, features)
 shap_values_avg = [sv.mean(axis=1) for sv in shap_values]
 x_explain_avg = x_explain.mean(axis=1)
 
-# Beeswarm plot (summary)
-shap.summary_plot(shap_values_avg[0], x_explain_avg, feature_names=features, show=True)
-plt.savefig("new data/shap_beeswarm.png", bbox_inches="tight")
-plt.clf()
+# === Calculate mean absolute SHAP value per feature ===
+mean_abs_shap = np.mean(np.abs(shap_values_avg[0]), axis=0)  # (features,)
+feature_importance = pd.Series(mean_abs_shap, index=features).sort_values(ascending=False)
 
-# Bar plot
-shap.summary_plot(shap_values_avg[0], x_explain_avg, feature_names=features, plot_type="bar", show=True)
-plt.savefig("new data/shap_bar.png", bbox_inches="tight")
-plt.clf()
+# === Show top features ===
+top_n = 10  # choose number of features
+print("\nTop {} features by SHAP importance:".format(top_n))
+print(feature_importance.head(top_n))
+
+top_features = feature_importance.head(top_n).index.tolist()
+print("top features: ", top_features)
