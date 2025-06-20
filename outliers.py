@@ -168,7 +168,6 @@ def main():
                 threshold = dataset[col + "_mixture"].quantile(quantile)
                 dataset[col + "_outlier"] = dataset[col + "_mixture"] < threshold
 
-                # Apply -2 replacement
                 dataset.loc[dataset[col + "_outlier"], col] = np.nan
                 dataset.drop(columns=[col + "_mixture", col + "_outlier"], inplace=True)
 
