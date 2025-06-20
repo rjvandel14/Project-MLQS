@@ -7,15 +7,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load data
-train_df = pd.read_csv("selected_train_rf.csv")
-test_df = pd.read_csv("selected_test_rf.csv")
+train_df = pd.read_csv("new data/selected_train_SVM-1.csv")
+test_df = pd.read_csv("new data/selected_test_SVM-1.csv")
 
 # Define features and target
 feature_cols = [
-    "cat_glucose_value (mmol/l)",
-    "temp_pattern_Alarm_No alarm(b)Insulinetype_Busy Scheduled",
-    "Insulinetype_Busy Temporary",
-    "glucose_diff"
+    "Glucose value (mmol/l)",
+    "glucose_diff",
+    "min_Glucose value (mmol/l)",
+    "cat_glucose_value (mmol/l)_4",
+    "temp_pattern_Insulinetype_Busy Scheduled(b)Only basal"
 ]
 target_col = "target_majority_category"
 
@@ -28,15 +29,12 @@ y_test = test_df[target_col].astype(int)
 learner = ClassificationAlgorithms()
 evaluator = ClassificationEvaluation()
 
-class_weights = {0: 10, 1: 5, 2: 1, 3: 1, 4: 1}
+class_weights = {0: 10, 1: 6, 2: 1, 3: 1, 4: 1}
 
 # Train & predict
 pred_y_train, pred_y_test, prob_train_y, prob_test_y = learner.support_vector_machine_with_kernel(
     X_train, y_train, X_test, gridsearch=True, print_model_details=True, class_weight=class_weights
 )
-
-# print(sorted(y_test.unique()))
-# print(sorted(pred_y_test))
 
 # Evaluate
 print("Test Accuracy:", evaluator.accuracy(y_test, pred_y_test))
@@ -58,3 +56,6 @@ plt.xlabel("Predicted")
 plt.ylabel("Actual")
 plt.title("Confusion Matrix - SVM")
 plt.show()
+
+print("Class distribution in training set:")
+print(y_train.value_counts(normalize=True).sort_index())

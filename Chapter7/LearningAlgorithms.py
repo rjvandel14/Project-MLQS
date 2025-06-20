@@ -26,6 +26,7 @@ from sklearn.model_selection import TimeSeriesSplit
 import pandas as pd
 import numpy as np
 import os
+import time
 
 class ClassificationAlgorithms:
 
@@ -73,11 +74,11 @@ class ClassificationAlgorithms:
     # probabilities associated with each class, each class being represented as a column in the data frame.
     # To improve the speed, one can use a CV of 3 only to make it faster
     # Include n_jobs in the GridSearchCV function and set it to -1 to use all processors which could also increase the speed
-    def support_vector_machine_with_kernel(self, train_X, train_y, test_X, C=1,  kernel='rbf', gamma=1e-3, gridsearch=True, print_model_details=False, class_weight='balanced'):
+    def support_vector_machine_with_kernel(self, train_X, train_y, test_X, C=2,  kernel='rbf', gamma=0.00075, gridsearch=True, print_model_details=False, class_weight='balanced'):
         # Create the model
         if gridsearch:
-            tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
-                         'C': [1, 10, 100], 'class_weight': [class_weight]}]
+            tuned_parameters = [{'kernel': ['rbf'], 'gamma': [0.00075],
+                         'C': [2], 'class_weight': [class_weight]}]
             tscv = TimeSeriesSplit(n_splits=5)
             svm = GridSearchCV(SVC(probability=True), tuned_parameters, cv=tscv, scoring='accuracy', n_jobs=-1)
         else:

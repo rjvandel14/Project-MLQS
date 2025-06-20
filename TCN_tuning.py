@@ -11,8 +11,17 @@ from tensorflow.keras.optimizers import Adam
 # === Load and preprocess ===
 def load_data(train_path):
     df = pd.read_csv(train_path)
-    exclude = ['Timestamp', 'target_majority_category']
-    features = [col for col in df.columns if col not in exclude]
+    df.columns = df.columns.str.strip()  # Important!
+    features = [
+        'glucose_diff',
+        'min_Glucose value (mmol/l)',
+        'Glucose value (mmol/l)',
+        'max_Carb ratio',
+        'std_Carbohydrates (g)'
+    ]
+    for f in features:
+        if f not in df.columns:
+            raise ValueError(f"Column '{f}' not found in dataset. Check spelling and spacing.")
     return df, features
 
 def create_sequences(df, features, sequence_length):
@@ -46,24 +55,40 @@ def build_tcn_model(input_shape, num_classes, nb_filters, kernel_size, dropout_r
     return model
 
 # === Main loop ===
+print("hallo")
 sequence_length = 6
-train_path = "data/selected_train_rf.csv"
+train_path = "new data/selected_train_TCN.csv"
 train_df, features = load_data(train_path)
+print("loaded")
+train_df = train_df.head(10000)
+
 x_all, y_all = create_sequences(train_df, features, sequence_length)
 
-# Split into train and validation
-x_train, x_val, y_train, y_val = train_test_split(
-    x_all, y_all, test_size=0.2, stratify=y_all, random_state=42)
+train_df.columns = train_df.columns.str.strip()  # remove leading/trailing spaces
+print("Cleaned column names:")
+print(train_df.columns.tolist())
+
+
+print("Number of features:", len(features))
+print("Feature names:", features)
+
+# Chronological split (no data leakage)
+split_idx = int(0.8 * len(x_all))
+x_train, x_val = x_all[:split_idx], x_all[split_idx:]
+y_train, y_val = y_all[:split_idx], y_all[split_idx:]
+
 num_classes = len(np.unique(y_all))
 
 filters_list = [32, 64, 128, 256]
-kernel_list = [2, 3, 5]
-dropout_list = [0.1, 0.2]
+kernel_list = [3]
+dropout_list = [0.1]
 stacks_list = [1, 2]
 lr_list = [0.001]
 batch_sizes = [32]
 
 results = []
+
+i = 0
 
 for nb_stacks in stacks_list:
     for learning_rate in lr_list:
@@ -72,6 +97,9 @@ for nb_stacks in stacks_list:
                 for kernel_size in kernel_list:
                     for dropout_rate in dropout_list:
                         print(f"Training TCN: filters={nb_filters}, kernel={kernel_size}, dropout={dropout_rate}, stacks={nb_stacks}, lr={learning_rate}, batch={batch_size}")
+
+                        i += 1
+                        print(i)
                         
                         optimizer = Adam(learning_rate=learning_rate)
 
@@ -85,9 +113,11 @@ for nb_stacks in stacks_list:
                             optimizer=optimizer
                         )
 
-                        early_stop = EarlyStopping(patience=5, restore_best_weights=True)
+                        early_stop = EarlyStopping(patience=5, restore_best_weights=True, monitor='val_loss')
                         model.fit(x_train, y_train,
                                   epochs=50,
+                                  validation_data=(x_val, y_val),
+
                                   batch_size=batch_size,
                                   callbacks=[early_stop],
                                   verbose=0)
