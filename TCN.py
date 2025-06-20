@@ -31,11 +31,11 @@ def create_sequences(df, features, sequence_length):
 def build_tcn_model(input_shape, num_classes):
     model = Sequential([
         TCN(input_shape=input_shape,
-            nb_filters=64,
+            nb_filters=256,
             kernel_size=3,
             dilations=(1, 2, 4, 8),
-            dropout_rate=0.2,
-            nb_stacks=2,
+            dropout_rate=0.1,
+            nb_stacks=1,
             use_skip_connections=True,
             use_batch_norm=True,
             return_sequences=False),
@@ -56,6 +56,11 @@ x_train, y_train = create_sequences(train_df, features, sequence_length)
 x_test, y_test = create_sequences(test_df, features, sequence_length)
 num_classes = len(np.unique(y_train))
 
+# Chronological validation split
+split_idx = int(0.8 * len(x_train))
+x_train_new, x_val = x_train[:split_idx], x_train[split_idx:]
+y_train_new, y_val = y_train[:split_idx], y_train[split_idx:]
+
 # Compute class weights
 weights = class_weight.compute_class_weight(class_weight='balanced',
                                              classes=np.unique(y_train),
@@ -65,13 +70,14 @@ class_weights = dict(enumerate(weights))
 model = build_tcn_model((sequence_length, x_train.shape[2]), num_classes)
 early_stop = EarlyStopping(patience=5, restore_best_weights=True)
 
-model.fit(x_train, y_train,
-          validation_split=0.2,
+model.fit(x_train_new, y_train_new,
+          validation_data=(x_val, y_val),
           epochs=50,
           batch_size=32,
           callbacks=[early_stop],
           class_weight=class_weights,
           verbose=1)
+
 
 y_pred = np.argmax(model.predict(x_test), axis=1)
 print("Classification Report:\n", classification_report(y_test, y_pred))

@@ -55,9 +55,13 @@ def build_tcn_model(input_shape, num_classes, nb_filters, kernel_size, dropout_r
     return model
 
 # === Main loop ===
+print("hallo")
 sequence_length = 6
 train_path = "new data/selected_train_TCN.csv"
 train_df, features = load_data(train_path)
+print("loaded")
+train_df = train_df.head(10000)
+
 x_all, y_all = create_sequences(train_df, features, sequence_length)
 
 train_df.columns = train_df.columns.str.strip()  # remove leading/trailing spaces
