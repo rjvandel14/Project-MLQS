@@ -68,7 +68,7 @@ weights = class_weight.compute_class_weight(class_weight='balanced',
                                              y=y_train)
 class_weights = dict(enumerate(weights))
 
-class_weights2 = [{0: 10, 1: 7, 2: 1, 3: 1, 4: 1}, {0: 6, 1: 4, 2: 1, 3: 1, 4: 1}, {0: 5, 1: 5, 2: 1, 3: 1, 4: 1}]
+class_weights2 = [{0: 5, 1: 10, 2: 1, 3: 1, 4: 1}, {0: 3, 1: 12, 2: 1, 3: 1, 4: 1}, {0: 10, 1: 10, 2: 1, 3: 1, 4: 1}]
 
 best_f1 = -1
 best_weights = None
