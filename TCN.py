@@ -49,8 +49,8 @@ def build_tcn_model(input_shape, num_classes):
 
 # === Run final model ===
 sequence_length = 6
-train_path = "data/selected_train_rf.csv"
-test_path = "data/selected_test_rf.csv"
+train_path = "new data/selected_train_TCN.csv"
+test_path = "new data/selected_test_TCN.csv"
 train_df, test_df, features = load_data(train_path, test_path)
 x_train, y_train = create_sequences(train_df, features, sequence_length)
 x_test, y_test = create_sequences(test_df, features, sequence_length)
