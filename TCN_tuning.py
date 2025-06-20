@@ -11,13 +11,17 @@ from tensorflow.keras.optimizers import Adam
 # === Load and preprocess ===
 def load_data(train_path):
     df = pd.read_csv(train_path)
+    df.columns = df.columns.str.strip()  # Important!
     features = [
-    'glucose_diff',
-    'min_Glucose value (mmol/l)',
-    'Glucose value (mmol/l)',
-    'max_Carb ratio',
-    'std_Carbohydrates (g)'
+        'glucose_diff',
+        'min_Glucose value (mmol/l)',
+        'Glucose value (mmol/l)',
+        'max_Carb ratio',
+        'std_Carbohydrates (g)'
     ]
+    for f in features:
+        if f not in df.columns:
+            raise ValueError(f"Column '{f}' not found in dataset. Check spelling and spacing.")
     return df, features
 
 def create_sequences(df, features, sequence_length):
@@ -51,12 +55,14 @@ def build_tcn_model(input_shape, num_classes, nb_filters, kernel_size, dropout_r
     return model
 
 # === Main loop ===
-
-
 sequence_length = 6
 train_path = "new data/selected_train_TCN.csv"
 train_df, features = load_data(train_path)
 x_all, y_all = create_sequences(train_df, features, sequence_length)
+
+train_df.columns = train_df.columns.str.strip()  # remove leading/trailing spaces
+print("Cleaned column names:")
+print(train_df.columns.tolist())
 
 
 print("Number of features:", len(features))
