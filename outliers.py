@@ -59,18 +59,15 @@ def main():
 
     # We'll create an instance of our visualization class to plot the results.
     DataViz = VisualizeDataset(__file__)
-
-    # Step 1: Let us see whether we have some outliers we would prefer to remove.
-    
     outlier_columns = list(final_methods.keys())
  
 
     # Create the outlier classes.
     OutlierDistr = DistributionBasedOutlierDetection()
     OutlierDist = DistanceBasedOutlierDetection()
+
+
     #chose one of the outlier methods: chauvenet, mixture, distance or LOF via the argument parser at the bottom of this page. 
-
-
     if FLAGS.mode == 'chauvenet':
 
         # And investigate the approaches for all relevant attributes.
@@ -78,8 +75,7 @@ def main():
 
             print(f"Applying Chauvenet outlier criteria for column {col}")
 
-            # And try out all different approaches. Note that we have done some optimization
-            # of the parameter values for each of the approaches by visual inspection.
+            # And try out all different approaches
             dataset = OutlierDistr.chauvenet(dataset, col, FLAGS.C)
             print(f"{col} → {dataset[col + '_outlier'].sum()} outliers detected.")
 
@@ -92,7 +88,7 @@ def main():
             print(f"Applying mixture model for column {col}")
             dataset = OutlierDistr.mixture_model(dataset, col)
 
-            # Determine threshold at 5% lowest likelihood 
+            # Determine threshold at chosen threshold lowest likelihood 
             threshold = dataset[col + '_mixture'].quantile(0.01)
 
             # Flag outliers: those with likelihood below the threshold
@@ -102,7 +98,6 @@ def main():
             num_outliers = dataset[col + '_outlier'].sum()
             print(f"{col} → {num_outliers} outliers detected (bottom 1% of likelihoods)")
 
-            # Plot just like in Chauvenet
             DataViz.plot_binary_outliers(dataset, col, col + '_outlier')
             
 
@@ -164,7 +159,7 @@ def main():
                 # Fit mixture model and get likelihoods
                 dataset = OutlierDistr.mixture_model(dataset, col, n_components=n_est)
                 
-                # Fix: threshold on the *likelihoods*, not on class labels
+                # threshold on the likelihoods 
                 threshold = dataset[col + "_mixture"].quantile(quantile)
                 dataset[col + "_outlier"] = dataset[col + "_mixture"] < threshold
 

@@ -7,12 +7,11 @@ def analyse_features(df_train, df_test, max_features, method):
     df_train = pd.read_csv("new data/all_features_train.csv",parse_dates=["Timestamp"])
     df_test = pd.read_csv("new data/all_features_test.csv",parse_dates=["Timestamp"])
 
-    # NaN values that are now present are because of de devision by 0
-    # So we can fill them in with 0
+    #NaN values that are now present are because of de devision by 0 during feature selection
+    #So we can fill them in with 0
     df_train = df_train.fillna(0)
     df_test = df_test.fillna(0)
 
-    # Define features and target
     X_train = df_train.drop(columns=['target_majority_category'])
     X_train = X_train.select_dtypes(include=[np.number])
     y_train = df_train['target_majority_category']
@@ -20,10 +19,9 @@ def analyse_features(df_train, df_test, max_features, method):
     X_test = X_test.select_dtypes(include=[np.number])
     y_test = df_test['target_majority_category']
 
-    # Initialize the feature selection class
     fs = FeatureSelectionClassification()
 
-    # Perform forward selection
+    #Forward selection
     selected_forward, ordered_forward, scores_forward = fs.forward_selection(
         max_features,
         X_train=X_train,
@@ -36,7 +34,7 @@ def analyse_features(df_train, df_test, max_features, method):
 
     print("Forward selected features:", selected_forward)
     print("Forward scores:", scores_forward)
-    # Plotting
+
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, len(scores_forward) + 1), scores_forward, marker='o', linestyle='-')
     plt.xlabel("Features added (in order)")
