@@ -8,6 +8,7 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.callbacks import EarlyStopping
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.metrics import f1_score
 
 def load_data(train_path, test_path):
     train_df = pd.read_csv(train_path)
@@ -62,23 +63,46 @@ weights = class_weight.compute_class_weight(class_weight='balanced',
                                              y=y_train)
 class_weights = dict(enumerate(weights))
 
-model = build_tcn_model((sequence_length, x_train.shape[2]), num_classes)
-early_stop = EarlyStopping(patience=5, restore_best_weights=True)
+class_weights2 = [
+    {0: 5, 1: 5, 2: 1, 3: 1, 4: 1}
+]
 
-model.fit(x_train_new, y_train_new,
-          validation_data=(x_val, y_val),
-          epochs=50,
-          batch_size=32,
-          callbacks=[early_stop],
-          class_weight=class_weights,
-          verbose=1)
+best_f1 = -1
+best_weights = None
+best_model = None
+results = []
 
+for weights in class_weights2:
+    print(f"Trying class weights: {weights}")
+    model = build_tcn_model((sequence_length, x_train.shape[2]), num_classes)
+    early_stop = EarlyStopping(patience=5, restore_best_weights=True)
 
-y_pred = np.argmax(model.predict(x_test), axis=1)
-print("Classification Report:\n", classification_report(y_test, y_pred))
+    model.fit(x_train_new, y_train_new,
+              validation_data=(x_val, y_val),
+              epochs=50,
+              batch_size=32,
+              callbacks=[early_stop],
+              class_weight=weights,
+              verbose=0)
 
-sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d', cmap='Blues')
+    y_val_pred = np.argmax(model.predict(x_val), axis=1)
+    f1 = f1_score(y_val, y_val_pred, average='macro')
+    print(f"→ Macro F1 (val): {f1:.4f}")
+    results.append((weights, f1))
+
+    if f1 > best_f1:
+        best_f1 = f1
+        best_weights = weights
+        best_model = model
+
+print("\nBest weights based on validation F1:", best_weights)
+
+# Evaluate best model on test set
+y_test_pred = np.argmax(best_model.predict(x_test), axis=1)
+print("\nClassification Report on Test Set:\n", classification_report(y_test, y_test_pred, digits=3))
+
+sns.heatmap(confusion_matrix(y_test, y_test_pred), annot=True, fmt='d', cmap='Blues')
 plt.xlabel("Predicted")
 plt.ylabel("True")
-plt.title("Confusion Matrix - Final TCN Model")
+plt.title("Confusion Matrix - Best TCN Model (Test Set)")
 plt.show()

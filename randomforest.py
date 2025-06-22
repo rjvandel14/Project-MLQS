@@ -7,7 +7,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import classification_report, confusion_matrix
 from imblearn.pipeline import Pipeline
 
-# Load your pre-split train and test data
+# Load data
 train_df = pd.read_csv("new data/selected_train_RF.csv")
 test_df = pd.read_csv("new data/selected_test_RF.csv")
 
@@ -17,10 +17,10 @@ X_test = test_df.drop(columns=["target_majority_category", "Timestamp"], errors=
 y_test = test_df["target_majority_category"]
 
 # Define class weights manually
-class_weights = {0: 50, 1: 30, 2: 1, 3: 1, 4: 1}
+class_weights = {0: 50, 1: 20, 2: 1, 3: 1, 4: 1}
 
 
-# Define pipeline (no oversampling)
+# Define pipeline with new class weights
 pipeline = Pipeline([
     ('rf', RandomForestClassifier(random_state=42, class_weight=class_weights))
 ])
@@ -63,7 +63,7 @@ plt.title("Confusion Matrix - Random Forest with Oversampling")
 plt.tight_layout()
 plt.show()
 
-# Print best parameters and classification report
+# Best parameters and classification report
 print("Best parameters found:", grid_search.best_params_)
 print("\nClassification report:")
 for label, metrics in class_report.items():

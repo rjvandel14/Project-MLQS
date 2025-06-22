@@ -9,7 +9,7 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
 
     df = df.drop(columns = ['Duration (minutes)'])
 
-    #categorize GCM values
+    #Categorize GCM values
     conditions = [
         df['Glucose value (mmol/l)'] < 3,
         (df['Glucose value (mmol/l)'] >= 3) & (df['Glucose value (mmol/l)'] <= 3.8),
@@ -30,11 +30,11 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
         ['increasing', 'stable', 'decreasing']
     )
 
-    #Create new column with total insuling and if it only consists of basal --> more interesting to do 1 IF both present?
+    #Create new column with total insuling and if it only consists of basal insulin
     df['Insulin_units_total'] = df['Insuline units (basal)'] + df['Insuline units (bolus)']
     df['Only basal'] = ((df['Insuline units (bolus)'].isna()) | (df['Insuline units (bolus)'] == 0)).astype(int)
 
-    #Set the rolling window to 30 minutes checken
+    #Rolling window of 30 minutes
     window = '30min'
     numeric_columns = ["Glucose value (mmol/l)", "Insuline units (basal)" ,"Insulin_units_total", 
                        "BG_input (mmol/l)", "Carbohydrates (g)","Carb ratio","Insuline units (bolus)"]
@@ -45,12 +45,12 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
             agg_glucose = df[col].rolling(window).agg([feature])
             df[feature + '_' + col] = agg_glucose[feature]
 
-    #Day of week feature
+    #Day of week
     df['day_of_week'] = df.index.dayofweek
     df.to_csv("feature.csv")
 
 
-    # One-hot encode selected categorical columns
+    #One-hot encode selected categorical columns
     categorical_columns = [
         'glucose_trend', 
         'cat_glucose_value (mmol/l)', 
@@ -67,7 +67,7 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
 
     cat_abs = CategoricalAbstraction()
 
-    #Get binary columns used in pattern mining
+    #Binary columns used for pattern mining
     cols = [col for col in df.columns if (
         col.startswith(('glucose_trend_', 'cat_glucose_value (mmol/l)_', 
                         'Insulinetype_', 'Insulinetype_bolus_', 'Alarm_')) 
@@ -85,9 +85,8 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
         max_pattern_size=max_pattern_size
     )
 
-    #create target
+    #Create the target
     future_window = 6
-
     abstracted_df['target_majority_category'] = (
         abstracted_df['cat_glucose_value (mmol/l)']
         .shift(-future_window + 1)  # shift upward to align current row with future window
@@ -95,7 +94,7 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
         .apply(lambda x: x.mode().iloc[0] if len(x) > 0 else np.nan)
     )
 
-    # Drop last rows where the label cannot be calculated
+    #Drop last rows, the label cannot be calculated here
     abstracted_df = abstracted_df.dropna(subset=['target_majority_category'])
 
     return abstracted_df
@@ -104,7 +103,7 @@ def feature_engineering(df, min_support, window_size, max_pattern_size):
 df_train = pd.read_csv("new data/Glucose_export_imputed.csv")
 df_test = pd.read_csv("new data/Glucose_export_imputed_test.csv")
 
-# Add a column to distinguish between train and test
+#Add a column to mark train and test
 df_train['__set__'] = 'train'
 df_test['__set__'] = 'test'
 df_combined = pd.concat([df_train, df_test], ignore_index=True)
