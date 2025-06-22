@@ -69,9 +69,7 @@ weights = class_weight.compute_class_weight(class_weight='balanced',
 class_weights = dict(enumerate(weights))
 
 class_weights2 = [
-    {0: 8, 1: 10, 2: 1, 3: 1, 4: 1},   # Strong focus on both hypo and hyper
-    {0: 10, 1: 12, 2: 1, 3: 1, 4: 1},  # Even more aggressive
-    {0: 7, 1: 9, 2: 1, 3: 1, 4: 1},    # Slightly milder
+    {0: 5, 1: 5, 2: 1, 3: 1, 4: 1}
 ]
 
 best_f1 = -1
@@ -106,7 +104,7 @@ print("\nBest weights based on validation F1:", best_weights)
 
 # Evaluate best model on test set
 y_test_pred = np.argmax(best_model.predict(x_test), axis=1)
-print("\nClassification Report on Test Set:\n", classification_report(y_test, y_test_pred))
+print("\nClassification Report on Test Set:\n", classification_report(y_test, y_test_pred, digits=3))
 
 sns.heatmap(confusion_matrix(y_test, y_test_pred), annot=True, fmt='d', cmap='Blues')
 plt.xlabel("Predicted")
