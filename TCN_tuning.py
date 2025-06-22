@@ -8,10 +8,9 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam
 
-# === Load and preprocess ===
 def load_data(train_path):
     df = pd.read_csv(train_path)
-    df.columns = df.columns.str.strip()  # Important!
+    df.columns = df.columns.str.strip() 
     features = [
         'glucose_diff',
         'min_Glucose value (mmol/l)',
@@ -34,7 +33,6 @@ def create_sequences(df, features, sequence_length):
         y.append(label)
     return np.array(x), np.array(y)
 
-# === Model builder ===
 def build_tcn_model(input_shape, num_classes, nb_filters, kernel_size, dropout_rate, nb_stacks, optimizer):
     model = Sequential([
         TCN(input_shape=input_shape,
@@ -54,25 +52,16 @@ def build_tcn_model(input_shape, num_classes, nb_filters, kernel_size, dropout_r
                   metrics=['accuracy'])
     return model
 
-# === Main loop ===
-print("hallo")
 sequence_length = 6
 train_path = "new data/selected_train_TCN.csv"
 train_df, features = load_data(train_path)
-print("loaded")
-train_df = train_df.head(10000)
 
 x_all, y_all = create_sequences(train_df, features, sequence_length)
 
-train_df.columns = train_df.columns.str.strip()  # remove leading/trailing spaces
+train_df.columns = train_df.columns.str.strip() 
 print("Cleaned column names:")
 print(train_df.columns.tolist())
 
-
-print("Number of features:", len(features))
-print("Feature names:", features)
-
-# Chronological split (no data leakage)
 split_idx = int(0.8 * len(x_all))
 x_train, x_val = x_all[:split_idx], x_all[split_idx:]
 y_train, y_val = y_all[:split_idx], y_all[split_idx:]
@@ -129,8 +118,7 @@ for nb_stacks in stacks_list:
                         results.append((nb_stacks, learning_rate, batch_size,
                                         nb_filters, kernel_size, dropout_rate, f1))
                         
-# Sort results
-results.sort(key=lambda x: x[6], reverse=True)  # f1-score is now the 6th element
+results.sort(key=lambda x: x[6], reverse=True) 
 
 print("\nTop 3 configs by macro F1:")
 for r in results[:3]:

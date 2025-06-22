@@ -9,7 +9,6 @@ from tensorflow.keras.callbacks import EarlyStopping
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# === Load and preprocess ===
 def load_data(train_path, test_path):
     train_df = pd.read_csv(train_path)
     test_df = pd.read_csv(test_path)
@@ -27,7 +26,6 @@ def create_sequences(df, features, sequence_length):
         y.append(label)
     return np.array(x), np.array(y)
 
-# === Build final TCN model ===
 def build_tcn_model(input_shape, num_classes):
     model = Sequential([
         TCN(input_shape=input_shape,
@@ -47,7 +45,6 @@ def build_tcn_model(input_shape, num_classes):
                   metrics=['accuracy'])
     return model
 
-# === Run final model ===
 sequence_length = 6
 train_path = "new data/selected_train_TCN.csv"
 test_path = "new data/selected_test_TCN.csv"
@@ -56,12 +53,10 @@ x_train, y_train = create_sequences(train_df, features, sequence_length)
 x_test, y_test = create_sequences(test_df, features, sequence_length)
 num_classes = len(np.unique(y_train))
 
-# Chronological validation split
 split_idx = int(0.8 * len(x_train))
 x_train_new, x_val = x_train[:split_idx], x_train[split_idx:]
 y_train_new, y_val = y_train[:split_idx], y_train[split_idx:]
 
-# Compute class weights
 weights = class_weight.compute_class_weight(class_weight='balanced',
                                              classes=np.unique(y_train),
                                              y=y_train)
